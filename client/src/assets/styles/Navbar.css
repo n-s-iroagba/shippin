@@ -1,0 +1,19 @@
+.bg-gold{
+    background-color: goldenrod;
+    padding: 0.4rem;
+    border-radius: 0.5rem;
+}
+/* Smooth transition for navbar styles */
+.navbar {
+    transition: background-color 0.3s, color 0.3s;
+  }
+  .bg-white {
+    background-color: white;
+  }
+  .text-black {
+    color: black;
+  }
+  .shadow-lg {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
