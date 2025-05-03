@@ -1,5 +1,5 @@
 .bg-gold{
-    background-color: goldenrod;
+    background-color: var(--primary-blue);
     padding: 0.4rem;
     border-radius: 0.5rem;
 }

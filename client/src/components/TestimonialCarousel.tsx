@@ -44,23 +44,23 @@ const TestimonialCarousel = () => {
           <div className="mt-4 flex flex-col items-center">
             <div className="flex justify-center">
             <FontAwesomeIcon
-            color="goldenrod"
+            color="var(--primary-blue)"
             icon={faStar}
             />
               <FontAwesomeIcon
-            color="goldenrod"
+            color="var(--primary-blue)"
             icon={faStar}
             />
 
             <FontAwesomeIcon
-            color="goldenrod"
+            color="var(--primary-blue)"
             icon={faStar}
             />  <FontAwesomeIcon
-            color="goldenrod"
+            color="var(--primary-blue)"
             icon={faStar}
             />
               <FontAwesomeIcon
-            color="goldenrod"
+            color="var(--primary-blue)"
             icon={faStar}
             />
             </div>

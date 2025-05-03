@@ -14,10 +14,10 @@ interface InformationProps {
 
 const Information: React.FC<InformationProps> = ({ title, text, images }) => {
   return (
-    <div className="p-4 bg-white text-black my-5">
+    <div className="p-4 bg-sky-100 text-black my-5"> {/* Changed background color to light blue */}
 
       <h2 className="text-3xl font-bold text-center mb-2">{title}</h2>
-      <div className="h-2 bg-goldenrod mx-auto w-20 mb-4"></div>
+      <div className="h-2 bg-sky-500 mx-auto w-20 mb-4"></div> {/* Changed divider color to a darker blue */}
 
       <p className="text-center text-gray-700 mb-8">{text}</p>
 
@@ -34,7 +34,7 @@ const Information: React.FC<InformationProps> = ({ title, text, images }) => {
               height='100'
               className="w-full h-full object-cover rounded-lg"
             />
-            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
+            <div className="absolute inset-0 bg-sky-700 bg-opacity-50 flex items-center justify-center rounded-lg"> {/* Changed overlay color to a darker blue */}
               <p className="text-white text-lg font-semibold text-wrap text-center">{image.text}</p>
             </div>
           </div>

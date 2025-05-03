@@ -1,113 +1,76 @@
-
-import { Model, DataTypes, NonAttribute, Optional, ForeignKey } from 'sequelize';
-import {sequelize} from '../config/database';
+import { Model, DataTypes } from 'sequelize';
+import { sequelize } from '../config/database';
 import { ShipmentDetails } from './ShipmentDetails';
 
 
-interface ShipmentStatusAttributes {
-  id: number
-  feeInDollars: number | null
-  amountPaid: number
-  dateAndTime: Date
-  requiresFee: boolean
-  title:string;
-  paymentStatus: 'YET_TO_BE_PAID' | 'PAID' | 'NO_NEED_FOR_PAYMENT'|'PENDING'
-  paymentDate: Date
-  paymentReceipt: string
-  percentageNote: number | null
-  carrierNote: string
-  supportingDocuments?: string[]
-  shipmentDetailsId: ForeignKey<ShipmentDetails['id']>
+export interface ShipmentStatusAttributes {
+  id: string;
+  shipmentDetailsId: string;
+  location: string;
+  status: string;
+  description: string;
+  timestamp: Date;
+  feeInDollars?: number;
+  paymentReceipt?: string;
+  amountPaid?: number;
+  paymentDate?: Date;
+  percentageNote?: string;
+  paymentStatus: 'PAID'|'YET_TO_BE_PAID'|'PENDING'
+  requiresFee:boolean
+  title:string
+  supportingDocuments?: string[];
 }
-type ShipmentStatusCreationAttributes =
-  Optional<
-    Omit<ShipmentStatusAttributes,'id'| 'paymentReceipt' | 'amountPaid'|"paymentDate">,
-    'feeInDollars' | 'percentageNote' | 'supportingDocuments'
-  >
-export class ShipmentStatus extends Model<
-  ShipmentStatusAttributes, ShipmentStatusCreationAttributes
-  
->{
-  public id!: number;
-  public feeInDollars: number|null= null;
-  public amountPaid!:number;
-  public dateAndTime!: Date;
-  public requiresFee!: boolean;
-  public title!:string;
-  public paymentStatus!: 'YET_TO_BE_PAID'|'PENDING'|'PAID'|'NO_NEED_FOR_PAYMENT';
-  public paymentReceipt!: string;
-  public percentageNote:number|null = null
-  public carrierNote!: string;
-  public supportingDocuments?: string[];
-  public shipmentDetailsId!: ForeignKey<ShipmentDetails['id']>;
-  public  paymentDate: Date |null = null
 
-  public shipmentDetails?:NonAttribute<ShipmentDetails>
+export class ShipmentStatus extends Model<ShipmentStatusAttributes> implements ShipmentStatusAttributes {
+  id!: string;
+  shipmentDetailsId!: string;
+  location!: string;
+  status!: string;
+  description!: string;
+  timestamp!: Date;
+  feeInDollars?: number;
+  paymentReceipt?: string;
+  amountPaid?: number;
+  paymentDate?: Date;
+  percentageNote?: string;
+  title!:string;
+  paymentStatus: 'PAID'|'YET_TO_BE_PAID'|'PENDING' ='YET_TO_BE_PAID'
+  requiresFee!:boolean
+  supportingDocuments?: string[];
 }
 
 ShipmentStatus.init({
   id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-  },
-
-  feeInDollars: {
-    type: DataTypes.DOUBLE,
-    allowNull: true
-  },
-  amountPaid: {
-    type: DataTypes.DOUBLE,
-    allowNull: true
-  },
-  dateAndTime: {
-    type: DataTypes.DATE,
-    allowNull: false,
-  },
-  requiresFee: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-
-  paymentReceipt: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
-  paymentStatus: {
-    type: DataTypes.ENUM('YET_TO_BE_PAID', 'PENDING', 'PAID', 'NO_NEED_FOR_PAYMENT'),
-    allowNull: true,
-  },
-  percentageNote: {
-    type: DataTypes.DOUBLE,
-    allowNull: true,
-  },
-
-  carrierNote: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-  },
-  supportingDocuments: {
-    type: DataTypes.JSON, // <-- MySQL JSON column
-    allowNull: true,
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
   },
   shipmentDetailsId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
+    allowNull: false,
     references: {
-      model: ShipmentDetails,
-      key: 'id',
-    },
+      model: 'ShipmentDetails',
+      key: 'id'
+    }
   },
-  paymentDate: {
-    type: DataTypes.DATEONLY,
-    allowNull: true,
-  },
-  title: {
-    type:DataTypes.STRING,
-    allowNull:false
-  }
+  location: DataTypes.STRING,
+  status: DataTypes.STRING,
+  description: DataTypes.TEXT,
+  timestamp: DataTypes.DATE,
+  feeInDollars: DataTypes.DECIMAL(10, 2),
+  paymentReceipt: DataTypes.STRING,
+  amountPaid: DataTypes.DECIMAL(10, 2),
+  paymentDate: DataTypes.DATE,
+  percentageNote: DataTypes.STRING,
+  supportingDocuments: DataTypes.ARRAY(DataTypes.STRING),
+  title: DataTypes.STRING,
+  paymentStatus: DataTypes.ENUM( 'PAID','YET_TO_BE_PAID','PENDING'),
+  requiresFee: DataTypes.BOOLEAN
 }, {
   sequelize,
   modelName: 'ShipmentStatus'
 });
 
-
+// Set up associations
+ShipmentStatus.belongsTo(ShipmentDetails);
+ShipmentDetails.hasMany(ShipmentStatus);

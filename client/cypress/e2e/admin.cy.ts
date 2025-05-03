@@ -180,13 +180,32 @@ describe('Admin Journeys', () => {
 
   it('5. Manage Crypto Wallets', () => {
     cy.login('admin@example.com', 'password123');
-    cy.visit('/admin/wallets');
-    cy.wait('@getWallets');
+    cy.visit('/admin/crypto-wallets');
 
-    // Test wallet validation
-    cy.contains('Add Wallet').click();
-    cy.contains('button', 'Save').click();
-    cy.contains('All fields are required').should('be.visible');
+    // Create wallet
+    cy.contains('Create Wallet').click();
+    cy.get('[data-testid="wallet-currency-input"]').type('BTC');
+    cy.get('[data-testid="wallet-address-input"]').type('0x1234567890');
+    cy.get('[data-testid="submit-button"]').click();
+    cy.contains('Crypto wallet created successfully').should('be.visible');
+
+    // Edit wallet
+    cy.get('[data-testid="edit-button"]').first().click();
+    cy.get('[data-testid="wallet-currency-input"]').clear().type('ETH');
+    cy.get('[data-testid="submit-button"]').click();
+    cy.contains('Crypto wallet updated successfully').should('be.visible');
+
+    // Delete wallet
+    cy.get('[data-testid="delete-button"]').first().click();
+    cy.contains('Are you sure').should('be.visible');
+    cy.contains('button', 'Yes').click();
+    cy.contains('Crypto wallet deleted successfully').should('be.visible');
+
+    // Validation
+    cy.contains('Create Wallet').click();
+    cy.get('[data-testid="submit-button"]').click();
+    cy.contains('Currency is required').should('be.visible');
+    cy.contains('Wallet address is required').should('be.visible');
 
     // Add wallet
     cy.contains('Add Wallet').click();

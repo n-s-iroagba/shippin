@@ -12,6 +12,7 @@ export class Admin extends Model {
   public verificationCode!: string | null;
   public verificationToken!: string | null;
   public forgotPasswordToken!:string|null
+  public loginToken!:string|null
 
 }
 
@@ -24,7 +25,8 @@ Admin.init(
     isVerified: { type: DataTypes.BOOLEAN, defaultValue: false },
     verificationCode: { type: DataTypes.STRING, allowNull: true },
     verificationToken: { type: DataTypes.STRING, allowNull: true },
-    forgotPasswordToken: {type:DataTypes.STRING, allowNull:true}
+    forgotPasswordToken: {type:DataTypes.STRING, allowNull:true},
+    loginToken: {type:DataTypes.STRING, allowNull:true}
   },
   { sequelize, modelName: "Admin" }
 );

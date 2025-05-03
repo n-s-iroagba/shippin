@@ -28,8 +28,8 @@ const Navbar: React.FC = () => {
 
   return (
     <nav
-      className={`sticky top-0 z-20 flex justify-between items-center px-4 py-2 w- ${
-        scrolled ? "bg-white text-black shadow-lg" : "bg-transparent"
+      className={`sticky top-0 z-20 flex justify-between items-center px-4 py-2 w-full ${
+        scrolled ? "bg-white text-dark-blue shadow-lg border-b border-lighter-blue/20" : "bg-transparent text-white"
       } transition-all duration-300`}
     >
       <div className="bg-gold">
@@ -48,7 +48,7 @@ const Navbar: React.FC = () => {
         <FontAwesomeIcon
           className="text-black"
           size="2x"
-          
+
           icon={faUserAlt}
         />
       </div>

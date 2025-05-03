@@ -1,142 +1,147 @@
-"use client";
 
-import { verifyEmailUrl } from "@/data/urls";
-import { useParams, useRouter } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+'use client';
 
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { authApi } from '@/utils/apiUtils';
 
-const VerifyEmail = () => {  
-    const params = useParams();
-    const token = params.token;
-  const [code, setCode] = useState(["", "", "", "", "", ""]);
-  const inputRefs = useRef<HTMLInputElement[]>([]);
-  const [message, setMessage] = useState("");
-  const [timeLeft, setTimeLeft] = useState(300); // 5-minute countdown
+export default function VerifyEmail() {
+  const [verificationCode, setVerificationCode] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [canResend, setCanResend] = useState(false);
-  const router = useRouter()
+  const [countdown, setCountdown] = useState(180); // 3 minutes
+  const router = useRouter();
+  const params = useParams();
+  const verificationToken = params.token as string;
 
   useEffect(() => {
-    // if (!token) setMessage("Invalid or missing verification token.");
-
-    // Start countdown timer
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev === 1) {
-          clearInterval(timer);
-          setCanResend(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
+    let timer: NodeJS.Timeout;
+    if (countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown(prev => prev - 1);
+      }, 1000);
+    } else {
+      setCanResend(true);
+    }
     return () => clearInterval(timer);
-  }, [token]);
-
-  const handleChange = (index: number, value: string) => {
-    if (!/^\d?$/.test(value)) return; // Allow only numbers
-
-    const newCode = [...code];
-    newCode[index] = value;
-    setCode(newCode);
-
-    if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !code[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-  };
+  }, [countdown]);
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    const verificationCode = code.join("");
-   try{
-    const res = await fetch( verifyEmailUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, code: verificationCode }),
-    });
-   localStorage.setItem('netlyLoginToken',await res.json())
-   router.push(`/admin/dashboard`)
+    setError('');
+    setLoading(true);
 
-  }catch(err){
-    console.error(err)
-  }
+    try {
+      const { data, error: apiError } = await authApi.verifyEmail({
+        code: verificationCode,
+        verificationToken
+      });
+
+      if (data?.loginToken) {
+        localStorage.setItem('admin_token', data.loginToken);
+        alert('Verification successful! You\'re now logged in.');
+        router.push('/admin/dashboard');
+      } else if (apiError) {
+        console.error('Verification error:', apiError);
+        if (apiError.includes('Admin not found')) {
+          setError('Verification failed. No admin found for this verification link.');
+        } else if (apiError.includes('Invalid token') || apiError.includes('Wrong token')) {
+          setError('Invalid verification code. Please check and try again.');
+        } else {
+          setError('Something went wrong. Please try again later.');
+        }
+      }
+    } catch (err) {
+      console.error('Verification error:', err);
+      setError('Something went wrong. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleResendCode = async () => {
-    setCanResend(false);
-    setTimeLeft(300);
+  const handleResend = async () => {
+    setError('');
+    setLoading(true);
 
-    const res = await fetch("/api/resend-code", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token }),
-    });
+    try {
+      const { data, error: apiError } = await authApi.resendVerification({
+        verificationToken
+      });
 
-    const data = await res.json();
-    setMessage(data.message);
+      if (data?.verificationToken) {
+        setCanResend(false);
+        setCountdown(180);
+        alert('New verification code has been sent to your email.');
+      } else if (apiError) {
+        console.error('Resend error:', apiError);
+        if (apiError.includes('Admin not found')) {
+          setError('No admin found for this verification link.');
+        } else if (apiError.includes('Invalid token')) {
+          setError('This verification link is invalid or expired. Please sign up again.');
+        } else {
+          setError('Failed to resend verification code. Please try again later.');
+        }
+      }
+    } catch (err) {
+      console.error('Resend error:', err);
+      setError('Failed to resend verification code. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <div className="bg-white p-6 rounded-lg shadow-md w-96">
-        <h2 className="text-xl font-bold text-center text-black">Verify Your Email</h2>
-        {message && <p className="text-center mt-2 text-red-600">{message}</p>}
-        {
-        // token && 
-        (
-          <form onSubmit={handleVerify} className="mt-4">
-            <div className="flex justify-center gap-2">
-              {code.map((digit, index) => (
-                <input
-                  key={index}
-                  ref={(el) => {
-                    inputRefs.current[index] = el!;
-                  }}
-                  type="text"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handleChange(index, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(index, e)}
-                  className="w-12 h-12 text-center text-lg text-black border border-black rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <div className="w-full max-w-md bg-white p-8 rounded-lg shadow">
+        <h2 className="text-2xl font-bold mb-6 text-center">Verify Your Email</h2>
 
-                />
-              ))}
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-goldenrod text-white p-2 rounded mt-4 text-black"
-            >
-              Verify
-            </button>
-          </form>
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+            {error}
+          </div>
         )}
 
-        {/* Countdown Timer */}
-        <p className="text-center text-gray-600 mt-2">
-          {canResend
-            ? "Didn't receive a code?"
-            : `Resend code in ${Math.floor(timeLeft / 60)}:${timeLeft % 60}`}
-        </p>
+        <form onSubmit={handleVerify}>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Verification Code
+            </label>
+            <input
+              type="text"
+              value={verificationCode}
+              onChange={(e) => setVerificationCode(e.target.value)}
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+              required
+              maxLength={6}
+              pattern="\d{6}"
+              title="Please enter the 6-digit verification code"
+            />
+          </div>
 
-        {/* Resend Code Button */}
-        <button
-          onClick={handleResendCode}
-          disabled={!canResend}
-          className={`w-full mt-2 p-2 rounded ${
-            canResend ? "bg-blue-500 text-white" : "bg-gray-300 text-gray-500"
-          }`}
-        >
-          Resend Code
-        </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 disabled:bg-blue-300 mb-4"
+          >
+            {loading ? 'Verifying...' : 'Verify Email'}
+          </button>
+        </form>
+
+        {!canResend ? (
+          <p className="text-center text-gray-600">
+            Resend code in {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, '0')}
+          </p>
+        ) : (
+          <button
+            onClick={handleResend}
+            disabled={loading}
+            className="w-full bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600 disabled:bg-gray-300"
+          >
+            {loading ? 'Sending...' : 'Resend Code'}
+          </button>
+        )}
       </div>
     </div>
   );
-};
-
-export default VerifyEmail;
+}

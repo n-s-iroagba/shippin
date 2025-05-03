@@ -1,6 +1,9 @@
-import { ShipmentStatus } from "@/app/types/ShipmentStatus";
+
 import { stepUrl } from "@/data/urls";
+import {  ShipmentStatus } from "@/types/shipment.types";
 import React, { useState } from "react";
+
+
 
 interface ModalProps {
   onClose: () => void;
@@ -89,12 +92,34 @@ export const AddShipmentStatusModal: React.FC<ModalProps> = ({ onClose, shipment
   );
 };
 
-export default function EditShipmentStatusModal({ step, onClose }: { step: ShipmentStatus; onClose: () => void }) {
-  const [formData, setFormData] = useState(step);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+
+
+export default function EditShipmentStatusModal({
+  step,
+  onClose,
+}: {
+  step: ShipmentStatus;
+  onClose: () => void;
+}) {
+  const [formData, setFormData] = useState<ShipmentStatus>(step);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type } = e.target;
+  
+    let parsedValue: string | number | boolean = value;
+  
+    if (type === "checkbox") {
+      parsedValue = (e.target as HTMLInputElement).checked;
+    } else if (type === "number") {
+      parsedValue = parseFloat(value);
+    }
+  
+    setFormData({ ...formData, [name]: parsedValue });
   };
+  
 
   const handleSubmit = async () => {
     try {
@@ -103,8 +128,9 @@ export default function EditShipmentStatusModal({ step, onClose }: { step: Shipm
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-      
+
       if (!response.ok) throw new Error("Failed to update shipment");
+
       window.location.reload();
       onClose();
     } catch (error) {
@@ -115,45 +141,99 @@ export default function EditShipmentStatusModal({ step, onClose }: { step: Shipm
   return (
     <div className="fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50">
       <div className="bg-white p-6 rounded-lg w-96 shadow-lg modal">
-        <h2 className="text-lg font-semibold mb-4">Edit Order</h2>
+        <h2 className="text-lg font-semibold mb-4">Edit Shipment</h2>
+
+        <label className="block mb-2">
+          Title:
+          <input
+            type="text"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+          />
+        </label>
+
         <label className="block mb-2">
           Payment Status:
           <select
-            name="status"
-            value={formData.status}
+            name="paymentStatus"
+            value={formData.paymentStatus}
             onChange={handleChange}
             className="w-full p-2 border rounded"
           >
-            <option value="Fee Unpaid">Fee Unpaid</option>
-            <option value="Fee Partially Paid">Fee Partially Paid</option>
-            <option value="Fee Paid">Fee Paid</option>
+            <option value="PAID">PAID</option>
+            <option value="YET_TO_BE_PAID">YET_TO_BE_PAID</option>
+            <option value="PENDING">PENDING</option>
           </select>
         </label>
-        <label className="block mb-4">
-          Shipment Status:
+
+        <label className="block mb-2">
+          Location:
           <input
             type="text"
-            name="shipmentStatus"
-            value={formData.shipmentStatus}
+            name="location"
+            value={formData.carrierNote}
             onChange={handleChange}
             className="w-full p-2 border rounded"
           />
         </label>
-        <label className="block mb-4">
+
+        <label className="block mb-2">
           Date:
           <input
             type="date"
-            name="date"
-            value={formData.date}
+            name="timestamp"
+            value={new Date(formData.dateAndTime).toISOString().substring(0, 10)}
             onChange={handleChange}
             className="w-full p-2 border rounded"
           />
         </label>
+
+        <label className="block mb-2">
+          Fee in Dollars:
+          <input
+            type="number"
+            name="feeInDollars"
+            value={formData.feeInDollars ?? ""}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+          />
+        </label>
+
+        <label className="block mb-2">
+          Requires Fee:
+          <input
+            type="checkbox"
+            name="requiresFee"
+            checked={formData.requiresFee}
+            onChange={handleChange}
+            className="ml-2"
+          />
+        </label>
+
+        <label className="block mb-4">
+          Percentage Note:
+          <input
+            type="text"
+            name="percentageNote"
+            value={formData.percentageNote ?? ""}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+          />
+        </label>
+
         <div className="flex justify-between">
-          <button onClick={handleSubmit} className="bg-blue-500 text-white px-4 py-2 rounded">
+          <button
+            onClick={handleSubmit}
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+          >
             Save
           </button>
-          <button onClick={() => onClose()} className="bg-red-500 text-white px-4 py-2 rounded">
+          <button
+            onClick={onClose}
+            className="bg-red-500 text-white px-4 py-2 rounded"
+          >
             Cancel
           </button>
         </div>

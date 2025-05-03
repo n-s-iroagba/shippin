@@ -1,205 +1,184 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+
 import { Admin } from "../models/Admin";
-import dotenv from "dotenv";
-import { sendVerificationEmail } from "../mailService";
+import { sendVerificationEmail, sendResetPasswordEmail } from "../mailService";
 
-dotenv.config();
+import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 
+export const generateToken = (payload: any, expiresIn: number = 3600): string => {
+  const secret = process.env.JWT_SECRET as Secret;
+
+  if (!secret) {
+    throw new Error('JWT_SECRET is not defined');
+  }
+
+  const options: SignOptions = { expiresIn };
+
+  return jwt.sign(payload, secret, options);
+};
+const handleError = (res: Response, error: any, defaultMessage: string) => {
+  console.error(`Error: ${defaultMessage}:`, error);
+  const status = error.status || 500;
+  const message = error.message || defaultMessage;
+  res.status(status).json({ message });
+};
+
+const createVerificationToken = async (admin: Admin) => {
+  const verificationCode = generateToken({id:admin.id,role:'Admin'});
+  const verificationToken = generateToken({ adminId: admin.id, code: verificationCode });
+
+  admin.verificationCode = verificationCode;
+  admin.verificationToken = verificationToken;
+  await admin.save();
+
+  return { verificationCode, verificationToken };
+};
+
+// Controller functions
 export const signUp = async (req: Request, res: Response): Promise<any> => {
   try {
     const { name, email, password } = req.body;
 
     const existingAdmin = await Admin.findOne({ where: { email } });
-    if (existingAdmin)
-      return res.status(400).json({ message: "Admin already exists" });
+    if (existingAdmin) {
+      throw { status: 400, message: "Admin with this email already exists" };
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const newAdmin = await Admin.create({
       name,
       email,
       password: hashedPassword,
-      isVerified: false,
+      isVerified: false
     });
 
-    const verificationToken = jwt.sign(
-      { AdminId: newAdmin.id },
-      process.env.JWT_SECRET as string,
-      {
-        expiresIn: "1h",
-      }
-    );
+    const { verificationToken } = await createVerificationToken(newAdmin);
+    await sendVerificationEmail(newAdmin);
 
-    const verificationCode = Math.floor(100000 + Math.random() * 900000);
-    newAdmin.verificationCode = String(verificationCode);
-    newAdmin.verificationToken = verificationToken;
-    await newAdmin.save();
-    await sendVerificationEmail(newAdmin)
-
-    res.status(201).json(verificationToken);
+    res.status(201).json({ verificationToken });
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ message: "Server error", error });
+    handleError(res, error, "An error occurred during signup");
   }
 };
 
-export const verifyEmail = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+export const verifyEmail = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { token,code } = req.body;
-    console.log('verifying email')
+    const { code, verificationToken } = req.body;
+    const decoded: any = jwt.verify(verificationToken, process.env.JWT_SECRET as string);
 
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET as string);
-    const admin = await Admin.findByPk(decoded.AdminId);
-    if (!admin)
-      return res.status(400).json({ message: "Invalid or expired token" });
+    const admin = await Admin.findOne({ 
+      where: { 
+        id: decoded.adminId,
+        verificationToken 
+      } 
+    });
+
+    if (!admin) throw { status: 404, message: "Admin not found" };
+    if (admin.verificationCode !== code) throw { status: 400, message: "Wrong verification code" };
 
     admin.isVerified = true;
+    admin.verificationToken = null;
     await admin.save();
 
-    const loginToken = jwt.sign(
-      { adminId: admin.id },
-      process.env.JWT_SECRET as string,
-      {
-        expiresIn: "1d",
-      }
+    const loginToken = generateToken(
+      { adminId: admin.id, email: admin.email, name: admin.name },
     );
 
-    res.json(loginToken);
+    res.json({ loginToken });
   } catch (error) {
-    console.error(error)
-    res.status(400).json({ message: "Invalid token" });
+    handleError(res, error, "Invalid token");
   }
 };
 
-
-
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response): Promise<any> => {
   try {
     const { email, password } = req.body;
-    
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
-    }
-
-    if (typeof email !== 'string' || typeof password !== 'string') {
-      return res.status(400).json({ message: "Invalid input format" });
-    }
-
-    if (!email.includes('@')) {
-      return res.status(400).json({ message: "Invalid email format" });
-    }
-
     const admin = await Admin.findOne({ where: { email } });
-    if (!admin) return res.status(400).json({ message: "Invalid credentials" });
 
-    if (!admin.isVerified)
-      return res
-        .status(400)
-        .json({ message: "Please verify your email first" });
+    if (!admin || !(await bcrypt.compare(password, admin.password))) {
+      throw { status: 400, message: "Invalid credentials" };
+    }
 
-    const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid credentials" });
+    if (!admin.isVerified) {
+      const { verificationToken } = await createVerificationToken(admin);
+      await sendVerificationEmail(admin);
+      return res.status(409).json({
+        message: "Email not verified",
+        verificationToken
+      });
+    }
 
-    const token = jwt.sign(
-      { adminId: admin.id },
-      process.env.JWT_SECRET as string,
-      {
-        expiresIn: "1d",
-      }
+    const loginToken = generateToken(
+      { adminId: admin.id, email: admin.email, name: admin.name },
+     
     );
 
-    res.json( token );
+    res.status(200).json({ loginToken });
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ message: "Server error", error });
+    handleError(res, error, "An error occurred during login");
   }
 };
 
 export const resendVerificationToken = async (req: Request, res: Response) => {
   try {
-    const { email } = req.body;
+    const { verificationToken } = req.body;
+    if (!verificationToken) throw { status: 400, message: "Verification token is required" };
 
-    const admin = await Admin.findOne({ where: { email } });
-    if (!admin) return res.status(404).json({ message: "Admin not found" });
+    const decoded: any = jwt.verify(verificationToken, process.env.JWT_SECRET as string);
+    const admin = await Admin.findOne({ where: { id: decoded.adminId, verificationToken } });
 
-    if (admin.isVerified)
-      return res.status(400).json({ message: "Admin already verified" });
+    if (!admin) throw { status: 404, message: "Admin not found" };
 
-    const verificationToken = jwt.sign(
-      { AdminId: admin.id },
-      process.env.JWT_SECRET as string,
-      { expiresIn: "1h" }
-    );
-
-    const verificationCode = Math.floor(100000 + Math.random() * 900000);
-    admin.verificationToken = verificationToken;
-    admin.verificationCode = String(verificationCode);
-    await admin.save();
-
+    const newToken = await createVerificationToken(admin);
     await sendVerificationEmail(admin);
 
-    res.status(200).json({ message: "Verification email resent" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(200).json({ verificationToken: newToken.verificationToken });
+  } catch (error) {
+    handleError(res, error, "An error occurred during token resend");
   }
 };
-
 
 export const forgotPassword = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
+    if (!email) throw { status: 400, message: "Email is required" };
+
     const admin = await Admin.findOne({ where: { email } });
+    if (!admin) throw { status: 404, message: "Admin not found" };
 
-    if (!admin) return res.status(404).json({ message: "Admin not found" });
-
-    const changePasswordToken = jwt.sign(
-      { adminId: admin.id },
-      process.env.JWT_SECRET as string,
-      { expiresIn: "15m" }
-    );
-
-    admin.forgotPasswordToken = changePasswordToken;
+    const resetToken = generateToken({ adminId: admin.id });
+    admin.forgotPasswordToken = resetToken;
     await admin.save();
 
-
-    await sendForgotPasswordEmail(admin); 
-
-    res.status(200).json({ message: "Password reset link sent to email" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    await sendResetPasswordEmail(admin, resetToken);
+    res.json({ message: "Reset link sent to email" });
+  } catch (error) {
+    handleError(res, error, "An error occurred during password reset request");
   }
 };
-
 
 export const resetPassword = async (req: Request, res: Response) => {
   try {
-    const { token, newPassword } = req.body;
+    const { password, resetToken } = req.body;
+    if (!password || !resetToken) throw { status: 400, message: "Missing required fields" };
 
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET as string);
-    const admin = await Admin.findByPk(decoded.adminId);
+    const decoded: any = jwt.verify(resetToken, process.env.JWT_SECRET as string);
+    const admin = await Admin.findOne({
+      where: {
+        id: decoded.adminId,
+        forgotPasswordToken: resetToken
+      }
+    });
 
-    if (!admin) return res.status(404).json({ message: "Invalid or expired token" });
+    if (!admin) throw { status: 404, message: "Admin not found" };
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    admin.password = hashedPassword;
-    admin.verificationToken = null;
+    admin.password = await bcrypt.hash(password, 10);
+    admin.forgotPasswordToken = null;
     await admin.save();
 
-    res.status(200).json({ message: "Password reset successful" });
-  } catch (err) {
-    console.error(err);
-    res.status(400).json({ message: "Invalid or expired token" });
+    res.json({ message: "Password reset successful" });
+  } catch (error) {
+    handleError(res, error, "An error occurred during password reset");
   }
 };
-function sendForgotPasswordEmail(admin: Admin) {
-  throw new Error("Function not implemented.");
-}
-

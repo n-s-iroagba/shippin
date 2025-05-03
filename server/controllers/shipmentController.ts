@@ -1,141 +1,102 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
+import { CustomError } from '../CustomError';
 import { ShipmentDetails } from '../models/ShipmentDetails';
 import { ShipmentStatus } from '../models/ShipmentStatus';
-import { ShipmentWallet } from '../models/ShipmentWallet';
-import { sendCustom } from '../mailService';
-import { Op } from 'sequelize';
-import { CustomError } from '../CustomError';
 
-const generateTrackingNumber = () => {
-  return 'SHP' + Date.now().toString().slice(-8) + Math.random().toString(36).slice(-4).toUpperCase();
-};
+export const shipmentController = {
+  async createShipment(req: Request, res: Response, next: NextFunction) {
+    try {
+   
+      const adminId = req.params.adminId;
+      const shipmentData = { ...req.body, adminId };
 
-export const createShipment = async (req: Request, res: Response) => {
-  try {
-    const { receiverName, receiverEmail, origin, destination, notes,senderName,sendingPickupPoint,
-      shippingTakeoffAddress,
-      expectedTimeOfArrival,
-      freightType,
-      kg,
-      dimensionInInches, } = req.body;
-    const adminId = Number(req.params.id);
-
-    if (!adminId) {
-      return res.status(403).json({ error: 'Admin authentication required' });
+      const shipment = await ShipmentDetails.create(shipmentData);
+      res.status(201).json(shipment);
+    } catch (error) {
+      next(error);
     }
+  },
 
-    if (!receiverName || !receiverEmail || !origin || !destination) {
-      throw new CustomError(400,'Missing required shipment details' );
+  async listShipments(req: Request, res: Response, next: NextFunction) {
+    try {
+      const adminId = req.params.adminId;
+      const shipments = await ShipmentDetails.findAll({
+        where: { adminId },
+        attributes: ['id', 'shipmentID', 'senderName', 'recipientName', 
+                    'receivingAddress', 'freightType', 'expectedTimeOfArrival']
+      });
+      res.json(shipments);
+    } catch (error) {
+      next(error);
     }
-    const trackingNumber = generateTrackingNumber();
+  },
 
-    const shipment = await ShipmentDetails.create({
-      shipmentID: trackingNumber,
-      senderName,
-      recipientName: receiverName,
-      receipientEmail: receiverEmail,
-      receivingAddress: destination,
-      shipmentDescription: notes,
-      adminId,
-      sendingPickupPoint,
-      shippingTakeoffAddress,
-      expectedTimeOfArrival,
-      freightType,
-      kg,
-      dimensionInInches,
-    });
+  async getShipmentDetails(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+  
 
-    res.status(201).json(shipment);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create shipment' });
-  }
-};
+      const shipment = await ShipmentDetails.findOne({
+        where: { id},
+        include: [{
+          model: ShipmentStatus,
+          as: 'statusHistory'
+        }]
+      });
 
+      if (!shipment) {
+        throw new CustomError(404, 'Shipment not found');
+      }
 
-export const updateShipment = async (
-  req: Request,
-  res: Response,
-
-): Promise<void> => {
-  const { shipmentDetailsId } = req.params;
-  const updateData = req.body;
-
-  try {
-    const shipment = await ShipmentDetails.findByPk(shipmentDetailsId);
-    if (!shipment) {
-      throw new CustomError(404, 'Shipment not found');
+      res.json(shipment);
+    } catch (error) {
+      next(error);
     }
+  },
 
-    await shipment.update(updateData);
-    res.status(200).json(shipment);
-  } catch (error) {
-    console.error('Error updating shipment:', error);
-    res.status(500).json({ error: 'Failed to create shipment' });
-  }
-};
+  async updateShipment(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+    
 
+      const [updated] = await ShipmentDetails.update(req.body, {
+        where: { id}
+      });
 
+      if (!updated) {
+        throw new CustomError(404, 'Shipment not found');
+      }
 
-export const getShipmentByTrackingNumber = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-  const { shipmentID } = req.params;
+      const shipment = await ShipmentDetails.findOne({
+        where: { id}
+      });
 
-  try {
-    const shipment = await ShipmentDetails.findOne({
-      where: { shipmentID },
-    });
-
-    if (!shipment) {
-      throw new CustomError(404, 'Shipment not found');
+      res.json(shipment);
+    } catch (error) {
+      next(error);
     }
+  },
 
-    res.status(200).json(shipment);
-  } catch (error) {
-    console.error('Error fetching shipment:', error);
-    res.status(500).json({ error: 'get shipment by tracking number' });
-  }
-};
+  async deleteShipment(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+     
 
-export const getShipmentByAdmin = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-  const { adminId } = req.params;
+      const deleted = await ShipmentDetails.destroy({
+        where: { id}
+      });
 
-  try {
-    const shipment = await ShipmentDetails.findOne({
-      where: { adminId },
-    });
+      if (!deleted) {
+        throw new CustomError(404, 'Shipment not found');
+      }
 
-    if (!shipment) {
-      throw new CustomError(404, 'Shipment not found');
+      await ShipmentStatus.destroy({
+        where: { shipmentDetailsId: id }
+      });
+
+      res.json({ message: 'Shipment deleted successfully' });
+    } catch (error) {
+      next(error);
     }
-
-    res.status(200).json(shipment);
-  } catch (error) {
-    console.error('Error fetching shipment:', error);
-    res.status(500).json({ error: 'get shipment by tracking number' });
-  }
-};
-
-export const deleteShipment = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-  const { shipmentDetailsId } = req.params;
-
-  try {
-    const shipment = await ShipmentDetails.findByPk(shipmentDetailsId);
-    if (!shipment) {
-      throw new CustomError(404, 'Shipment not found');
-    }
-
-    await shipment.destroy();
-    res.status(200).json({ message: 'Shipment deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting shipment:', error);
-    res.status(500).json({ error: 'shipment deleted successfully'})
   }
 };

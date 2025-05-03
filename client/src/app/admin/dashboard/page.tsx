@@ -132,7 +132,7 @@ const ShipmentDashboard: React.FC = () => {
       <h1 className="text-2xl font-bold mb-4 text-center">Shipment Dashboard</h1>
       <div className="flex flex-wrap gap-4 mb-4">
         <button
-          className="bg-green-500 text-white px-4 py-2 w-full md:w-auto"
+          className="bg-primary-blue hover:bg-dark-blue transition-colors duration-200 text-white px-6 py-2.5 rounded-lg shadow-md w-full md:w-auto font-medium"
           onClick={() => setShowCreateModal(true)}
         >
           Create Shipment

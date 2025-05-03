@@ -1,102 +1,74 @@
-import { Model, DataTypes, ForeignKey, InferAttributes, InferCreationAttributes, ENUM } from "sequelize";
-import { Admin } from "./Admin"; // Ensure correct import
-import { ShipmentStatus } from "./ShipmentStatus"; // Import related ShipmentStatus model
-import { sequelize } from "../config/database";
+import { Model, DataTypes } from 'sequelize';
+import { sequelize } from '../config/database';
 
-export class ShipmentDetails extends Model<
-  InferAttributes<ShipmentDetails>,
-  InferCreationAttributes<ShipmentDetails>
-> {
-  declare id?: number;
-  declare shipmentID: string;
-  declare senderName: string;
-  declare receivingAddress: string;
-  declare recipientName: string;
-  declare shipmentDescription: string;
-  declare receipientEmail :string; 
-  declare sendingPickupPoint:string; 
-  declare shippingTakeoffAddress:string; 
-  declare expectedTimeOfArrival:Date;
-  declare adminId: ForeignKey<Admin["id"]>;
-  declare freightType: 'AIR'|'SEA'|'LAND'
-  declare kg:number
-  declare dimensionInInches:string
-
-  // One ShipmentDetails has many ShipmentStatus
-  declare shipmentStatus?: ShipmentStatus[];
+export interface ShipmentDetailsAttributes {
+  id: string;
+  shipmentID: string;
+  adminId: string;
+  senderName: string;
+  sendingPickupPoint: string;
+  shippingTakeoffAddress: string;
+  receivingAddress: string;
+  recipientName: string;
+  shipmentDescription: string;
+  expectedTimeOfArrival: Date;
+  freightType: 'AIR' | 'SEA' | 'LAND';
+  weight: number;
+  dimensionInInches: string;
+  receipientEmail: string;
 }
 
-ShipmentDetails.init(
-  {
-    id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    shipmentID: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    senderName: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    sendingPickupPoint: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    shippingTakeoffAddress: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    receivingAddress: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    recipientName: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    shipmentDescription: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    adminId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: Admin,
-        key: "id",
-      },
-    },
-    expectedTimeOfArrival: {
-      type: DataTypes.DATE,
-      allowNull: false
-    },
-    freightType: {
-      type: ENUM('AIR', 'SEA', 'LAND')
-    },
-    kg: {
-      type: DataTypes.INTEGER,
-      allowNull: false
-    },
-    dimensionInInches: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-    receipientEmail: {
-      type: DataTypes.STRING
-    },
- 
+export class ShipmentDetails extends Model<ShipmentDetailsAttributes> implements ShipmentDetailsAttributes {
+  id!: string;
+  shipmentID!: string;
+  adminId!: string;
+  senderName!: string;
+  sendingPickupPoint!: string;
+  shippingTakeoffAddress!: string;
+  receivingAddress!: string;
+  recipientName!: string;
+  shipmentDescription!: string;
+  expectedTimeOfArrival!: Date;
+  freightType!: 'AIR' | 'SEA' | 'LAND';
+  weight!: number;
+  dimensionInInches!: string;
+  receipientEmail!: string;
+}
+
+ShipmentDetails.init({
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
   },
-  {
-    sequelize,
-    modelName: "shipmentDetails",
-    timestamps: true,
-  }
-);
-
-
-
-
+  shipmentID: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  adminId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: 'Admins',
+      key: 'id'
+    }
+  },
+  senderName: DataTypes.STRING,
+  sendingPickupPoint: DataTypes.STRING,
+  shippingTakeoffAddress: DataTypes.STRING,
+  receivingAddress: DataTypes.STRING,
+  recipientName: DataTypes.STRING,
+  shipmentDescription: DataTypes.TEXT,
+  expectedTimeOfArrival: DataTypes.DATE,
+  freightType: {
+    type: DataTypes.ENUM('AIR', 'SEA', 'LAND'),
+    allowNull: false
+  },
+  weight: DataTypes.FLOAT,
+  dimensionInInches: DataTypes.STRING,
+  receipientEmail: DataTypes.STRING
+}, {
+  sequelize,
+  modelName: 'ShipmentDetails'
+});

@@ -1,52 +1,61 @@
-import { Router } from 'express';
-import multer from 'multer';
-import { approvePayment, createShipmentStatus, deleteShipmentStatus, getShipmentStatusesByShipmentDetailsId, updateShipmentStatus, uploadPaymentReceipt } from './controllers/ShipmentStatusController';
-import { createWallet, getWalletsByAdmin, getWalletsByCoinName, updateWallet, deleteWallet } from './controllers/walletController';
+
+
 
 // Initialize multer storage (customize as needed)
-const upload = multer({ dest: 'uploads/' });
 
-// Support up to 10 supporting documents per status creation
-const uploadSupportingDocs = upload.array('supportingDocuments', 10);
-// Single file upload for payment receipt
-const uploadReceipt = upload.single('paymentReceipt');
+import { Router } from "express";
+import { signUp, login, verifyEmail, resendVerificationToken, forgotPassword, resetPassword } from "./controllers/authController";
+import { listTemplates, createTemplate, updateTemplate, deleteTemplate, downloadTemplate } from "./controllers/documentTemplateController";
+import { fiatPlatformController } from "./controllers/fiatPlatformController";
+import { shipmentController } from "./controllers/shipmentController";
+import { trackingController } from "./controllers/trackingController";
+import { createWallet, getWalletsByAdmin, getWalletsByCoinName, updateWallet, deleteWallet } from "./controllers/walletController";
+import { uploadDocument, uploadPayment, uploadTemplate } from "./middleware/upload";
+import shipmentStatusController from "./controllers/ShipmentStatusController";
+import { authMiddleware } from "./middleware/auth";
+import { socialMediaController } from "./controllers/socialMediaController";
+import { getPaymentInit } from "./controllers/paymentController";
+
+// Multer middleware configurations
+const uploadSupportingDocs = uploadDocument.array('supportingDocuments', 10);
+const uploadReceipt = uploadPayment.single('paymentReceipt');
 
 const router = Router();
 
-// Create a new shipment status with optional supporting documents
-router.post(
-  '/shipments/:shipmentDetailsId/statuses',
-  uploadSupportingDocs,
-  createShipmentStatus
-);
 
-router.get('/shipments/:shipmentDetailsId/statuses', getShipmentStatusesByShipmentDetailsId);
+// Shipment routes
+router.post('/admin/shipment-details', authMiddleware, shipmentController.createShipment);
+router.get('/admin/shipment-details', authMiddleware, shipmentController.listShipments);
+router.get('/admin/shipment-details/:id', authMiddleware, shipmentController.getShipmentDetails);
+router.put('/admin/shipment-details/:id', authMiddleware, shipmentController.updateShipment);
+router.delete('/admin/shipment-details/:id', authMiddleware, shipmentController.deleteShipment);
 
-
-// Update an existing shipment status
-router.put(
-  '/statuses/:shipmentStatusId',
-  updateShipmentStatus
-);
-
-// Delete a shipment status
-router.delete(
-  '/statuses/:shipmentStatusId',
-  deleteShipmentStatus
-);
-
-// Approve payment for a shipment status
+// Shipment status routes
+router.post('/admin/shipment-details/:shipmentId/statuses', authMiddleware, uploadSupportingDocs, shipmentStatusController.createStatus);
+router.put('/admin/shipment-details/:shipmentId/statuses/:statusId', authMiddleware, shipmentStatusController.updateStatus);
+router.delete('/admin/shipment-details/:shipmentId/statuses/:statusId', authMiddleware, shipmentStatusController.deleteShipmentStatus);
+router.get('/shipments/:shipmentDetailsId/statuses', shipmentStatusController.getShipmentStatusesByShipmentDetailsId);
 router.post(
   '/statuses/:shipmentStatusId/approve-payment',
-  approvePayment
+  shipmentStatusController.approvePayment
 );
-
-// Upload payment receipt for a shipment status
 router.post(
   '/statuses/:shipmentStatusId/upload-receipt',
   uploadReceipt,
-  uploadPaymentReceipt
+  shipmentStatusController.uploadPaymentReceipt
 );
+
+
+// Original routes remain (assuming no conflicts)
+router.post('/admin/signup', signUp);
+router.post('/admin/login', login);
+router.post('/admin/verify-email', verifyEmail);
+router.post('/admin/resend-verification-token', resendVerificationToken);
+router.post('/admin/forgot-password', forgotPassword);
+router.post('/admin/reset-password', resetPassword);
+
+
+
 
 
 // Create
@@ -59,5 +68,32 @@ router.get('/wallets/coin/:coinName', getWalletsByCoinName);
 router.put('/wallets/:id', updateWallet);
 // Delete
 router.delete('/wallets/:id', deleteWallet);
-export default router;
 
+// Tracking routes
+router.get('/api/track/:trackingId', trackingController.trackShipment);
+
+// Fiat Platform routes
+router.get('/api/admin/fiat-platforms', authMiddleware, fiatPlatformController.list);
+router.post('/api/admin/fiat-platforms', authMiddleware, fiatPlatformController.create);
+router.put('/api/admin/fiat-platforms/:id', authMiddleware, fiatPlatformController.update);
+router.delete('/api/admin/fiat-platforms/:id', authMiddleware, fiatPlatformController.delete);
+
+// Social Media routes -  Assuming the existence of socialMediaController
+router.get('/api/admin/social-media', authMiddleware, socialMediaController.list);
+router.post('/api/admin/social-media', authMiddleware, socialMediaController.create);
+router.put('/api/admin/social-media/:id', authMiddleware, socialMediaController.update);
+router.delete('/api/admin/social-media/:id', authMiddleware, socialMediaController.remove);
+
+// Payment routes - Assuming the existence of paymentController
+router.get('/api/payment/:statusId',getPaymentInit);
+
+// Document Template routes
+router.get('/api/admin/templates', authMiddleware, listTemplates);
+router.post('/api/admin/templates', authMiddleware, uploadTemplate.single('file'), createTemplate);
+router.put('/api/admin/templates/:id', authMiddleware, uploadTemplate.single('file'), updateTemplate);
+router.delete('/api/admin/templates/:id', authMiddleware, deleteTemplate);
+router.get('/api/admin/templates/:id/download', authMiddleware, downloadTemplate);
+
+
+
+export default router;

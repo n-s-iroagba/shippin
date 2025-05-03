@@ -4,6 +4,21 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "scripts": {
+      "test": "jest",
+      "start": "ts-node index.ts",
+      "dev": "nodemon index.ts"
+    },
+    "jest": {
+      "preset": "ts-jest",
+      "testEnvironment": "node",
+      "testMatch": [
+        "**/__tests__/**/*.test.ts"
+      ],
+      "setupFiles": [
+        "dotenv/config"
+      ]
+    },
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.ts"
   },
@@ -32,6 +47,8 @@
     "@types/jsonwebtoken": "^9.0.9",
     "@types/multer": "^1.4.12",
     "@types/nodemailer": "^6.4.17",
-    "nodemon": "^3.1.9"
+    "@types/supertest": "^6.0.3",
+    "nodemon": "^3.1.9",
+    "supertest": "^7.1.0"
   }
 }
