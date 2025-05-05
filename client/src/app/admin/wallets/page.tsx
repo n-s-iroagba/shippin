@@ -103,12 +103,13 @@ export default function WalletManagement() {
           <div key={wallet.id} className="bg-white p-4 rounded-lg shadow">
             <h3 className="font-bold">{wallet.coinName}</h3>
             <p className="text-sm break-all">{wallet.walletAddress}</p>
-            {wallet.qrCode && (
+            {/* {wallet.qrCode && (
               <img src={wallet.qrCode} alt="QR Code" className="mt-2 w-32 h-32" />
-            )}
+            )} */}
           </div>
         ))}
       </div>
+      {error && <p>An error occurred</p>}
     </div>
   );
 }

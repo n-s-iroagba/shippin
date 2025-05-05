@@ -1,19 +1,19 @@
-
 import { Request, Response, NextFunction } from 'express';
 import { ShipmentDetails } from '../models/ShipmentDetails';
 import { ShipmentStatus } from '../models/ShipmentStatus';
 import { Admin } from '../models/Admin';
 import { CustomError } from '../CustomError';
-import { sendEmail } from '../mailService';
+import { sendCustomMail} from '../mailService';
 
 export const trackingController = {
   async trackShipment(req: Request, res: Response, next: NextFunction) {
+    console.log('in tracking function')
     try {
       const { trackingId } = req.params;
       const { lat, lng } = req.query;
 
       if (!trackingId) {
-        throw new CustomError('Tracking ID is required', 400);
+        throw new CustomError(400, 'Tracking ID is required');
       }
 
       const shipmentDetails = await ShipmentDetails.findOne({
@@ -25,36 +25,40 @@ export const trackingController = {
       });
 
       if (!shipmentDetails) {
-        throw new CustomError('Tracking ID not found', 404);
+        throw new CustomError(404, 'Tracking ID not found');
       }
+      const statuses = ShipmentStatus.findAll({where:{
+        shipmentDetailsId:shipmentDetails.id
+      }})
 
       const admin = await Admin.findByPk(shipmentDetails.adminId);
       
       if (admin && admin.email) {
         try {
-          await sendEmail(admin.email, 'Shipment Tracked', {
+          await sendCustomMail(admin.email, {subject:'Shipment Tracked', 
             senderName: shipmentDetails.senderName,
             recipientName: shipmentDetails.recipientName,
             receivingAddress: shipmentDetails.receivingAddress,
             shipmentID: shipmentDetails.shipmentID,
-            location: { lat, lng }
+            loction: { lat, lng }
+          
           });
         } catch (error) {
           console.error('Failed to send email:', error);
-          // Continue execution as per spec
         }
       }
 
+
       res.json({
         shipmentDetails,
-        shipmentStatuses: shipmentDetails.ShipmentStatus
+        shipmentStatuses: statuses
       });
     } catch (error) {
       console.error('Tracking error:', error);
       if (error instanceof CustomError && error.message === 'Tracking ID not found') {
         next(error);
       } else {
-        next(new CustomError('Failed to load tracking data', 500));
+        next(new CustomError(500, 'Failed to load tracking data'));
       }
     }
   }

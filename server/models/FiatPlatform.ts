@@ -1,11 +1,11 @@
 
-import { Model, DataTypes } from 'sequelize';
+import { Model, DataTypes, ForeignKey } from 'sequelize';
 import { sequelize } from '../config/database';
 import { Admin } from './Admin';
 
 export interface FiatPlatformAttributes {
   id?: number;
-  adminId: number;
+  adminId: ForeignKey<Admin['id']>;
   name: string;
   baseUrl: string;
   messageTemplate: string;
@@ -13,7 +13,7 @@ export interface FiatPlatformAttributes {
 
 export class FiatPlatform extends Model<FiatPlatformAttributes> implements FiatPlatformAttributes {
   id?: number;
-  adminId!: number;
+  adminId!: ForeignKey<Admin['id']> ;
   name!: string;
   baseUrl!: string;
   messageTemplate!: string;
@@ -50,5 +50,3 @@ FiatPlatform.init({
   modelName: 'FiatPlatform'
 });
 
-FiatPlatform.belongsTo(Admin);
-Admin.hasMany(FiatPlatform);

@@ -1,21 +1,15 @@
 'use client';
 
-import { useAuth } from '@/hooks/useAuth';
+
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const { isAuthenticated, loading } = useAuth(true);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
 
-  if (!isAuthenticated) {
-    return null;
-  }
+
 
   return (
     <div className="min-h-screen bg-gray-100">

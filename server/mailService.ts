@@ -1,13 +1,17 @@
 import nodemailer from 'nodemailer';
 import { Admin } from './models/Admin';
 
+
 const transporter = nodemailer.createTransport({
-  host: "mail.netlylogistics.com",
+  service: "Gmail",
+  host: "smtp.gmail.com",
   port: 465,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: "hauteequity@gmail.com",
+    pass: "cprf immt omzt espd",
   },
+  logger: true, // Enable logger
+  debug: true, // Enable debug output
 });
 
 // Generate stylish email template
@@ -63,9 +67,9 @@ export const sendForgotPasswordMail = async (user: Admin, resetToken: string) =>
   }
 };
 
-export const sendCustom = async (
+export const sendCustomMail = async (
   email: string,
-  data: { subject: string; message: string }
+  data: any
 ) => {
   try {
     const emailContent = generateEmailTemplate(data.subject, data.message);

@@ -1,168 +1,160 @@
+"use client";
 
-'use client';
+import React, { useEffect, useRef, useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faCheckCircle,
+  faTimesCircle,
+  faBox,
 
-import { useEffect, useState, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { ShipmentDetails, ShipmentStatus } from '@/types/shipment.types';
-import { ApiService } from '@/services/api.service';
-import Loading from '@/components/Loading';
-import PaymentModal from '@/components/PaymentModal';
-import { formatDate } from '@/utils/utils';
+  faInfoCircle,
+  faDollarSign,
+  faFileAlt,
+} from "@fortawesome/free-solid-svg-icons";
+import { useParams } from "next/navigation";
+;
+import { SERVER_URL, trackShipmentUrl } from "@/data/urls";
+import Loading from "@/components/Loading";
+import { ShipmentDetails, ShipmentStatus } from "@/types/shipment.types";
 
-export default function TrackingDashboard() {
-  const { trackingId } = useParams();
-  const [shipment, setShipment] = useState<ShipmentDetails | null>(null);
-  const [statuses, setStatuses] = useState<ShipmentStatus[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showScrollModal, setShowScrollModal] = useState(true);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [selectedStatusId, setSelectedStatusId] = useState<string | null>(null);
-  const lastStatusRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
+const ShipmentTrackingDashboard: React.FC = () => {
+  const [shipmentDetails, setShipmentDetails] = useState<ShipmentDetails | null>(null);
+  const params = useParams();
+  const trackingId = params.trackingId;
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const getLocation = async () => {
-      try {
-        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject);
-        });
-
-        const response = await ApiService.trackShipment(
-          trackingId as string,
-          position.coords.latitude,
-          position.coords.longitude
-        );
-
-        setShipment(response.shipmentDetails);
-        setStatuses(response.shipmentStatuses);
-      } catch (err: any) {
-        if (err.message === 'Tracking ID not found') {
-          setError('Tracking ID not found');
-        } else {
-          setError('An error occurred while fetching tracking data. Please try again later.');
-        }
-      } finally {
-        setLoading(false);
+    const scrollToEnd = () => {
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollWidth;
       }
     };
 
-    getLocation();
+    if (window.innerWidth < 768) {
+      setTimeout(scrollToEnd, 100);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!trackingId) return;
+
+    const fetchShipmentDetails = async () => {
+      try {
+        const response = await fetch(`${SERVER_URL}/ap/track/shipment/${trackingId}`);
+        if (!response.ok) throw new Error("Failed to fetch shipment details");
+        
+        const data: ShipmentDetails & { shipmentStatuses: ShipmentStatus[] } = await response.json();
+        setShipmentDetails(data);
+      } catch (error) {
+        alert("An error occurred, try again later");
+        console.error("Fetch Error:", error);
+      }
+    };
+
+    fetchShipmentDetails();
   }, [trackingId]);
 
-  const scrollToLatestStatus = () => {
-    lastStatusRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handlePayment = (statusId: string) => {
-    router.push(`/payment/${statusId}`);
-  };
-
-  const handleUploadReceipt = (statusId: string) => {
-    setSelectedStatusId(statusId);
-    setShowPaymentModal(true);
-  };
-
-  if (loading) return <Loading />;
-  if (error) return <div className="text-red-500 text-center p-4">{error}</div>;
+  if (!shipmentDetails) return <Loading />;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {showScrollModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg">
-            <h3 className="text-lg font-bold mb-4">Go to most recent status?</h3>
-            <div className="flex justify-end gap-4">
-              <button
-                onClick={() => {
-                  scrollToLatestStatus();
-                  setShowScrollModal(false);
-                }}
-                className="bg-primary-blue text-white px-4 py-2 rounded"
-              >
-                Yes
-              </button>
-              <button
-                onClick={() => setShowScrollModal(false)}
-                className="bg-gray-200 px-4 py-2 rounded"
-              >
-                No
-              </button>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header Section */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-2">
+            <FontAwesomeIcon icon={faBox} className="text-indigo-600 h-6 w-6" />
+            Shipment Tracking
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600">Tracking ID: {trackingId}</p>
+        </div>
+
+        {/* Payment Alert */}
+        {shipmentDetails.shipmentStatuses && shipmentDetails.shipmentStatuses.some(s => s.paymentStatus === 'PENDING') && (
+          <div className="bg-gradient-to-r from-orange-50 to-amber-50 border-l-4 border-orange-400 text-orange-800 p-4 mb-8 rounded-lg flex items-start gap-3">
+            <FontAwesomeIcon icon={faDollarSign} className="text-lg mt-1 flex-shrink-0" />
+            <div>
+              <p className="font-semibold text-sm sm:text-base">Payment Required</p>
+              <p className="text-xs sm:text-sm mt-1">Complete payment to continue shipment processing</p>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {showPaymentModal && selectedStatusId && (
-        <PaymentModal
-          statusId={selectedStatusId}
-          onClose={() => {
-            setShowPaymentModal(false);
-            setSelectedStatusId(null);
-          }}
-          onSuccess={() => {
-            setShowPaymentModal(false);
-            setSelectedStatusId(null);
-            window.location.reload();
-          }}
-        />
-      )}
+        {/* Progress Timeline */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+  <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+    <FontAwesomeIcon icon={faInfoCircle} className="text-indigo-600" />
+    Shipment Progress
+  </h3>
+  <div className="relative overflow-hidden">
+    <div ref={scrollContainerRef} className="flex overflow-x-auto pb-4 scroll-smooth">
+      <div className="flex min-w-max w-full justify-between">
+        {(shipmentDetails.shipmentStatuses || []).map((status, index, array) => {
+          const isComplete = status.paymentStatus === 'PAID';
+          const isCurrent = index === array.length - 1;
 
-      <div className="bg-white shadow rounded-lg p-6 mb-8">
-        <h2 className="text-2xl font-bold mb-4">Shipment Details</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <p className="font-semibold">Tracking ID</p>
-            <p>{shipment?.shipmentID}</p>
-          </div>
-          <div>
-            <p className="font-semibold">Sender</p>
-            <p>{shipment?.senderName}</p>
-          </div>
-          <div>
-            <p className="font-semibold">Recipient</p>
-            <p>{shipment?.recipientName}</p>
-          </div>
-          <div>
-            <p className="font-semibold">Delivery Address</p>
-            <p>{shipment?.receivingAddress}</p>
-          </div>
-        </div>
+          return (
+            <div key={status.id} className="flex flex-col items-center relative px-4">
+              <div className={`h-1 w-full absolute top-5 left-1/2 -translate-y-1/2 ${isComplete ? 'bg-indigo-600' : 'bg-gray-300'}`} />
+              <div className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center mb-4 
+                ${isComplete ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'}
+                ${isCurrent ? 'ring-4 ring-indigo-200' : ''}`}>
+                <FontAwesomeIcon 
+                  icon={isComplete ? faCheckCircle : faTimesCircle} 
+                  className={isComplete ? 'text-white' : 'text-gray-400'}
+                />
+              </div>
+              <div className="text-center">
+                <p className={`text-sm font-medium ${isCurrent ? 'text-indigo-600' : 'text-gray-900'}`}>
+                  {status.title}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {new Date(status.dateAndTime).toLocaleDateString()}
+                </p>
+                {status.supportingDocument && (
+                  <button
+                    onClick={() => window.open(status.supportingDocument, '_blank')}
+                    className="text-xs text-indigo-600 hover:underline mt-1 flex items-center gap-1"
+                  >
+                    <FontAwesomeIcon icon={faFileAlt} className="h-3 w-3" />
+                    View Document
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
+    </div>
+  </div>
+</div>
 
-      <div data-testid="status-list" className="space-y-4">
-        {statuses.map((status, index) => (
-          <div
-            key={status.id}
-            ref={index === statuses.length - 1 ? lastStatusRef : null}
-            className="bg-white shadow rounded-lg p-6"
-          >
-            <h3 className="text-xl font-semibold mb-2">{status.title}</h3>
-            <p className="text-gray-600 mb-4">{status.carrierNote}</p>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">
-                {formatDate(status.dateAndTime)}
-              </span>
-              {status.requiresFee && status.paymentStatus === 'YET_TO_BE_PAID' && (
-                <div className="space-x-4">
-                  <button
-                    onClick={() => handlePayment(status.id)}
-                    className="bg-primary-blue text-white px-4 py-2 rounded"
-                  >
-                    Make Payment
-                  </button>
-                  <button
-                    onClick={() => handleUploadReceipt(status.id)}
-                    className="bg-gray-200 px-4 py-2 rounded"
-                  >
-                    Upload Receipt
-                  </button>
-                </div>
-              )}
-            </div>
+        {/* Shipment Details Grid */}
+        <div className="bg-white rounded-2xl shadow-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+            <FontAwesomeIcon icon={faInfoCircle} className="text-indigo-600 h-5 w-5" />
+            Shipment Details
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <DetailItem label="Shipment ID" value={shipmentDetails.shipmentID} />
+            <DetailItem label="Content" value={shipmentDetails.shipmentDescription} />
+            <DetailItem label="Sender" value={shipmentDetails.senderName} />
+            <DetailItem label="Sending Port" value={shipmentDetails.sendingPickupPoint} />
+            <DetailItem label="Delivery Address" value={shipmentDetails.receivingAddress} />
+            <DetailItem label="Recipient" value={shipmentDetails.recipientName} />
+            <DetailItem label="Freight Type" value={shipmentDetails.freightType} />
+            <DetailItem label="Expected Arrival" value={new Date(shipmentDetails.expectedTimeOfArrival).toLocaleDateString()} />
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );
-}
+};
+
+const DetailItem: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 transition-colors hover:border-indigo-100">
+    <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</dt>
+    <dd className="mt-1 text-sm font-medium text-gray-900 truncate">{value}</dd>
+  </div>
+);
+
+export default ShipmentTrackingDashboard;

@@ -1,5 +1,5 @@
+import { SERVER_URL } from "@/data/urls";
 
-import { SERVER_URL } from '../data/urls';
 
 interface ApiResponse<T> {
   data?: T;
@@ -16,8 +16,10 @@ export const authApi = {
         body: JSON.stringify(data),
       });
       const result = await response.json();
+      
       return response.ok ? { data: result } : { error: result.message };
     } catch (error) {
+      console.error(error)
       return { error: 'An error occurred. Please try again later.' };
     }
   },
@@ -32,11 +34,12 @@ export const authApi = {
       const result = await response.json();
       return response.ok ? { data: result } : { error: result.message };
     } catch (error) {
+      console.error(error)
       return { error: 'An error occurred. Please try again later.' };
     }
   },
 
-  login: async (data: { email: string; password: string }): Promise<ApiResponse<{ loginToken: string }>> => {
+  login: async (data: { email: string; password: string }): Promise<ApiResponse<{ loginToken: string,verificationToken?:string }>> => {
     try {
       const response = await fetch(`${SERVER_URL}/api/admin/login`, {
         method: 'POST',
@@ -46,6 +49,7 @@ export const authApi = {
       const result = await response.json();
       return response.ok ? { data: result } : { error: result.message };
     } catch (error) {
+      console.error(error)
       return { error: 'An error occurred. Please try again later.' };
     }
   },
@@ -60,20 +64,7 @@ export const authApi = {
       const result = await response.json();
       return response.ok ? { data: result } : { error: result.message };
     } catch (error) {
-      return { error: 'An error occurred. Please try again later.' };
-    }
-  },
-
-  verifyEmail: async (data: { code: string; verificationToken: string }): Promise<ApiResponse<{ loginToken: string }>> => {
-    try {
-      const response = await fetch(`${SERVER_URL}/api/admin/verify-email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      const result = await response.json();
-      return response.ok ? { data: result } : { error: result.message };
-    } catch (error) {
+      console.error(error)
       return { error: 'An error occurred. Please try again later.' };
     }
   },
@@ -88,6 +79,7 @@ export const authApi = {
       const result = await response.json();
       return response.ok ? { data: result } : { error: result.message };
     } catch (error) {
+      console.error(error)
       return { error: 'An error occurred. Please try again later.' };
     }
   },
@@ -102,6 +94,7 @@ export const authApi = {
       const result = await response.json();
       return response.ok ? { data: result } : { error: result.message };
     } catch (error) {
+      console.error(error)
       return { error: 'An error occurred. Please try again later.' };
     }
   },
@@ -116,6 +109,7 @@ export const authApi = {
       const result = await response.json();
       return response.ok ? { data: result } : { error: result.message };
     } catch (error) {
+      console.error(error)
       return { error: 'An error occurred. Please try again later.' };
     }
   },
@@ -139,11 +133,12 @@ export const protectedApi = {
       const result = await response.json();
       return response.ok ? { data: result } : { error: result.message };
     } catch (error) {
+      console.error(error)
       return { error: 'An error occurred. Please try again later.' };
     }
   },
 
-  post: async <T>(endpoint: string, data: any): Promise<ApiResponse<T>> => {
+  post: async <U,T>(endpoint: string, data: U): Promise<ApiResponse<T>> => {
     try {
       const response = await fetch(`${SERVER_URL}${endpoint}`, {
         method: 'POST',
@@ -153,11 +148,12 @@ export const protectedApi = {
       const result = await response.json();
       return response.ok ? { data: result } : { error: result.message };
     } catch (error) {
+      console.error(error)
       return { error: 'An error occurred. Please try again later.' };
     }
   },
 
-  put: async <T>(endpoint: string, data: any): Promise<ApiResponse<T>> => {
+  put: async <U,T>(endpoint: string, data: U): Promise<ApiResponse<T>> => {
     try {
       const response = await fetch(`${SERVER_URL}${endpoint}`, {
         method: 'PUT',
@@ -167,6 +163,7 @@ export const protectedApi = {
       const result = await response.json();
       return response.ok ? { data: result } : { error: result.message };
     } catch (error) {
+      console.error(error)
       return { error: 'An error occurred. Please try again later.' };
     }
   },
@@ -180,6 +177,7 @@ export const protectedApi = {
       const result = await response.json();
       return response.ok ? { data: result } : { error: result.message };
     } catch (error) {
+      console.error(error)
       return { error: 'An error occurred. Please try again later.' };
     }
   },

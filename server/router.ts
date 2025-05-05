@@ -12,29 +12,32 @@ import { trackingController } from "./controllers/trackingController";
 import { createWallet, getWalletsByAdmin, getWalletsByCoinName, updateWallet, deleteWallet } from "./controllers/walletController";
 import { uploadDocument, uploadPayment, uploadTemplate } from "./middleware/upload";
 import shipmentStatusController from "./controllers/ShipmentStatusController";
-import { authMiddleware } from "./middleware/auth";
+import { } from "./middleware/auth";
 import { socialMediaController } from "./controllers/socialMediaController";
 import { getPaymentInit } from "./controllers/paymentController";
 
 // Multer middleware configurations
-const uploadSupportingDocs = uploadDocument.array('supportingDocuments', 10);
+const uploadSupportingDocs = uploadDocument.array('supportingDocument', 10);
 const uploadReceipt = uploadPayment.single('paymentReceipt');
 
 const router = Router();
 
 
 // Shipment routes
-router.post('/admin/shipment-details', authMiddleware, shipmentController.createShipment);
-router.get('/admin/shipment-details', authMiddleware, shipmentController.listShipments);
-router.get('/admin/shipment-details/:id', authMiddleware, shipmentController.getShipmentDetails);
-router.put('/admin/shipment-details/:id', authMiddleware, shipmentController.updateShipment);
-router.delete('/admin/shipment-details/:id', authMiddleware, shipmentController.deleteShipment);
+router.post('/admin/shipment-details/:adminId',  shipmentController.createShipment);
+router.get('/admin/shipment/:adminId',  shipmentController.listShipments);
+router.get('/admin/shipmentdetails/:id',  shipmentController.getShipmentDetails);
+router.put('/admin/shipment-details/:id',  shipmentController.updateShipment);
+router.delete('/admin/shipment-details/:id',  shipmentController.deleteShipment);
+
+//track Shipment
+router.get('/track/shipment/:trackingId',  trackingController.trackShipment);
 
 // Shipment status routes
-router.post('/admin/shipment-details/:shipmentId/statuses', authMiddleware, uploadSupportingDocs, shipmentStatusController.createStatus);
-router.put('/admin/shipment-details/:shipmentId/statuses/:statusId', authMiddleware, shipmentStatusController.updateStatus);
-router.delete('/admin/shipment-details/:shipmentId/statuses/:statusId', authMiddleware, shipmentStatusController.deleteShipmentStatus);
-router.get('/shipments/:shipmentDetailsId/statuses', shipmentStatusController.getShipmentStatusesByShipmentDetailsId);
+router.post('/admin/status/:shipmentId',  uploadSupportingDocs, shipmentStatusController.createStatus);
+router.put('/admin/status/:statusId',  shipmentStatusController.updateStatus);
+router.delete('/admin/status/:statusId',  shipmentStatusController.deleteShipmentStatus);
+// router.get('/shipments/:shipmentDetailsId/statuses', shipmentStatusController.getShipmentStatusesByShipmentDetailsId);
 router.post(
   '/statuses/:shipmentStatusId/approve-payment',
   shipmentStatusController.approvePayment
@@ -73,26 +76,26 @@ router.delete('/wallets/:id', deleteWallet);
 router.get('/api/track/:trackingId', trackingController.trackShipment);
 
 // Fiat Platform routes
-router.get('/api/admin/fiat-platforms', authMiddleware, fiatPlatformController.list);
-router.post('/api/admin/fiat-platforms', authMiddleware, fiatPlatformController.create);
-router.put('/api/admin/fiat-platforms/:id', authMiddleware, fiatPlatformController.update);
-router.delete('/api/admin/fiat-platforms/:id', authMiddleware, fiatPlatformController.delete);
+router.get('/api/admin/fiat-platforms',  fiatPlatformController.list);
+router.post('/api/admin/fiat-platforms',  fiatPlatformController.create);
+router.put('/api/admin/fiat-platforms/:id',  fiatPlatformController.update);
+router.delete('/api/admin/fiat-platforms/:id',  fiatPlatformController.delete);
 
 // Social Media routes -  Assuming the existence of socialMediaController
-router.get('/api/admin/social-media', authMiddleware, socialMediaController.list);
-router.post('/api/admin/social-media', authMiddleware, socialMediaController.create);
-router.put('/api/admin/social-media/:id', authMiddleware, socialMediaController.update);
-router.delete('/api/admin/social-media/:id', authMiddleware, socialMediaController.remove);
+router.get('/api/admin/social-media',  socialMediaController.list);
+router.post('/api/admin/social-media',  socialMediaController.create);
+router.put('/api/admin/social-media/:id',  socialMediaController.update);
+router.delete('/api/admin/social-media/:id',  socialMediaController.remove);
 
 // Payment routes - Assuming the existence of paymentController
 router.get('/api/payment/:statusId',getPaymentInit);
 
 // Document Template routes
-router.get('/api/admin/templates', authMiddleware, listTemplates);
-router.post('/api/admin/templates', authMiddleware, uploadTemplate.single('file'), createTemplate);
-router.put('/api/admin/templates/:id', authMiddleware, uploadTemplate.single('file'), updateTemplate);
-router.delete('/api/admin/templates/:id', authMiddleware, deleteTemplate);
-router.get('/api/admin/templates/:id/download', authMiddleware, downloadTemplate);
+router.get('/api/admin/templates',  listTemplates);
+router.post('/api/admin/templates',  uploadTemplate.single('file'), createTemplate);
+router.put('/api/admin/templates/:id',  uploadTemplate.single('file'), updateTemplate);
+router.delete('/api/admin/templates/:id',  deleteTemplate);
+router.get('/api/admin/templates/:id/download',  downloadTemplate);
 
 
 

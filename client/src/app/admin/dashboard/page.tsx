@@ -1,23 +1,24 @@
 "use client";
 
-import { Shipment } from "@/app/types/Shipment";
 import Loading from "@/components/Loading";
 import { CreateShipmentModal } from "@/components/ShipmentModals";
-import { adminShipmentUrl } from "@/data/urls";
+import { adminShipmentUrl, SERVER_URL } from "@/data/urls";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import jwt_decode from "jwt-decode";
+// import {jwtDecode} from "jwt-decode";
+import { ShipmentDetails } from "@/types/shipment.types";
 
 
 const ShipmentDashboard: React.FC = () => {
-  const [shipments, setShipments] = useState<Shipment[]>([]);
-  const [filteredShipments, setFilteredShipments] = useState<Shipment[]>([]);
+  const [shipments, setShipments] = useState<ShipmentDetails[]>([]);
+  const [filteredShipments, setFilteredShipments] = useState<ShipmentDetails[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
+  const adminId = 1
 
   useEffect(() => {
     let result = [...shipments];
@@ -25,7 +26,7 @@ const ShipmentDashboard: React.FC = () => {
     // Search filter
     if (searchTerm) {
       result = result.filter(s => 
-        s.recipientEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        s.recipientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         s.shipmentID?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
@@ -33,53 +34,15 @@ const ShipmentDashboard: React.FC = () => {
     // Status filter
     if (filterStatus !== 'all') {
       result = result.filter(s => 
-        s.shipmentStatus?.some(status => status.shipmentStatus === filterStatus)
+        s.shipmentStatuses?.some(status => status.paymentStatus === filterStatus)
       );
     }
 
-    // Date filter
-    if (dateRange.start && dateRange.end) {
-      result = result.filter(s => {
-        const shipmentDate = new Date(s.createdAt).getTime();
-        const start = new Date(dateRange.start).getTime();
-        const end = new Date(dateRange.end).getTime();
-        return shipmentDate >= start && shipmentDate <= end;
-      });
-    }
-
+ 
     setFilteredShipments(result);
   }, [shipments, searchTerm, filterStatus, dateRange]);
   const router = useRouter()
 
-  const [adminId, setAdminId] = useState<string | null>(null);
-  const [loadingAuth, setLoadingAuth] = useState(true);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem('admin_token');
-      if (!token) {
-        router.push('/admin/login');
-        return;
-      }
-      try {
-        const decodedToken: any = jwt_decode(token);
-        if (!decodedToken.adminId || Date.now() >= decodedToken.exp * 1000) {
-          throw new Error('Invalid or expired token');
-        }
-        const response = await fetch(`${adminShipmentUrl}/verify`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!response.ok) throw new Error('Session invalid');
-        setAdminId(decodedToken.adminId);
-        setLoadingAuth(false);
-      } catch (error) {
-        console.error('Auth error:', error);
-        localStorage.removeItem('admin_token');
-        router.push('/admin/login');
-      }
-    };
-    checkAuth();
-  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('admin_token');
@@ -89,17 +52,19 @@ const ShipmentDashboard: React.FC = () => {
   useEffect(() => {
     const fetchShipments = async () => {
       try {
-        const token = localStorage.getItem('admin_token');
-        if (!token) {
-          setError("Authentication token missing");
-          router.push('/admin/login');
-          return;
-        }
-        const response = await fetch(`${adminShipmentUrl}/${adminId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+  //       const token = localStorage.getItem('admin_token');
+  //       if (!token) {
+  //         setError("Authentication token missing");
+  //         router.push('/admin/login');
+  //         return;
+  //       }
+        const response = await fetch(`${SERVER_URL}/api/admin/shipment/${adminId}`
+        //   , {
+        //   headers: {
+        //     'Authorization': `Bearer ${token}`
+        //   }
+        // }
+      );
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.message || "Failed to fetch shipments");
@@ -115,16 +80,17 @@ const ShipmentDashboard: React.FC = () => {
     };
 
     if(adminId) fetchShipments();
-  }, [adminId]);
+  }, [adminId, router]);
 
-  const updateUI = async (newShipment: Shipment) => {
+  const updateUI = async (newShipment: ShipmentDetails
+  ) => {
     setShipments([...shipments, newShipment]);
     setShowCreateModal(false);
   };
 
-  if (loadingAuth) return <Loading/>;
+  // if (loadingAuth) return <Loading/>;
   if (!adminId) return null;
-  if (loading) return <Loading/>;
+  // if (loading) return <Loading/>;
   if (error) return <p className="text-center text-red-500 text-lg">{error}</p>;
 
   return (
@@ -180,7 +146,7 @@ const ShipmentDashboard: React.FC = () => {
         className="bg-blue-500 text-white px-4 py-2 mb-4 ml-2 w-full md:w-auto"
         onClick={() => {
           const csvContent = filteredShipments.map(s => 
-            `${s.shipmentID},${s.senderName},${s.recipientName},${s.receivingAddress},${s.createdAt}`
+            `${s.shipmentID},${s.senderName},${s.recipientName},${s.receivingAddress}`
           ).join('\n');
 
           const blob = new Blob([`ID,Sender,Recipient,Destination,Date\n${csvContent}`], { type: 'text/csv' });

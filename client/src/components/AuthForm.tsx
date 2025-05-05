@@ -53,7 +53,7 @@ export default function AuthForm({ title, fields, onSubmit, error, buttonText, f
               type={field.type}
               value={formData[field.name] || ''}
               onChange={(e) => setFormData({...formData, [field.name]: e.target.value})}
-              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600" {/* Changed focus ring color */}
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600" 
               required={field.required}
               pattern={field.pattern}
               minLength={field.minLength}
@@ -65,7 +65,7 @@ export default function AuthForm({ title, fields, onSubmit, error, buttonText, f
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed" {/* Adjusted blue shades */}
+          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed" 
         >
           {loading ? <Loading /> : buttonText}
         </button>

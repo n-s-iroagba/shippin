@@ -1,6 +1,6 @@
 
 import { Model, DataTypes } from 'sequelize';
-import sequelize from '../config/database';
+import {sequelize} from '../config/database';
 import { Admin } from './Admin';
 
 export class SocialMedia extends Model {

@@ -24,9 +24,9 @@ Admin.init(
     password: { type: DataTypes.STRING, allowNull: false },
     isVerified: { type: DataTypes.BOOLEAN, defaultValue: false },
     verificationCode: { type: DataTypes.STRING, allowNull: true },
-    verificationToken: { type: DataTypes.STRING, allowNull: true },
-    forgotPasswordToken: {type:DataTypes.STRING, allowNull:true},
-    loginToken: {type:DataTypes.STRING, allowNull:true}
+    verificationToken: { type: DataTypes.TEXT, allowNull: true },
+    forgotPasswordToken: {type:DataTypes.TEXT, allowNull:true},
+    loginToken: {type:DataTypes.TEXT, allowNull:true}
   },
   { sequelize, modelName: "Admin" }
 );

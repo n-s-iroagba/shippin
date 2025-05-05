@@ -4,7 +4,8 @@ import { ShipmentDetails } from '../models/ShipmentDetails';
 import { CustomError } from '../CustomError';
 
 const shipmentStatusController = {
-  async createStatus(req: Request, res: Response, next: NextFunction) {
+  async createStatus(req: Request, res: Response, next: NextFunction):Promise<any> {
+    console.log('in create status')
     try {
       const { shipmentId } = req.params;
 
@@ -12,19 +13,18 @@ const shipmentStatusController = {
       if (!shipment) {
         throw new CustomError(404, 'Shipment not found');
       }
-
       const status = await ShipmentStatus.create({
-        ...req.body,
-        shipmentDetailsId: shipmentId
+     ...req.body,
+        shipmentDetailsId: Number(shipmentId),
       });
-
       res.status(201).json(status);
     } catch (error) {
-      next(error);
+      console.error('Error creating shipment statuses:', error);
+      return res.status(500).json('error in shipmentStatus')
     }
   },
 
-  async updateStatus(req: Request, res: Response, next: NextFunction) {
+  async updateStatus(req: Request, res: Response, next: NextFunction):Promise<any> {
     try {
       const { shipmentId, statusId } = req.params;
 
@@ -44,11 +44,13 @@ const shipmentStatusController = {
       const status = await ShipmentStatus.findByPk(statusId);
       res.json(status);
     } catch (error) {
-      next(error);
+      console.error('Error updating shipment statuses:', error);
+    
+      return res.status(500).json('error in shipmentStatus')
     }
   },
 
-  async getShipmentStatusesByShipmentDetailsId(req: Request, res: Response, next: NextFunction) {
+  async getShipmentStatusesByShipmentDetailsId(req: Request, res: Response, next: NextFunction):Promise<any> {
     const { shipmentDetailsId } = req.params;
 
     try {
@@ -65,11 +67,12 @@ const shipmentStatusController = {
       res.status(200).json(statuses);
     } catch (error) {
       console.error('Error fetching shipment statuses:', error);
-      next(new CustomError(500, 'Internal Server Error'));
+    
+      return res.status(500).json('error in shipmentStatus')
     }
   },
 
-  async deleteShipmentStatus(req: Request, res: Response, next: NextFunction) {
+  async deleteShipmentStatus(req: Request, res: Response, next: NextFunction):Promise<any> {
     const { shipmentStatusId } = req.params;
 
     try {
@@ -82,11 +85,11 @@ const shipmentStatusController = {
       res.status(200).json({ message: 'ShipmentStatus deleted successfully' });
     } catch (err) {
       console.error('Error deleting ShipmentStatus:', err);
-      next(err instanceof CustomError ? err : new CustomError(500, 'Internal Server Error'));
+      return res.status(500).json('error deleting shipment status')
     }
   },
 
-  async approvePayment(req: Request, res: Response, next: NextFunction) {
+  async approvePayment(req: Request, res: Response, next: NextFunction):Promise<any> {
     const { shipmentStatusId } = req.params;
     const { paymentDate, amountPaid } = req.body;
 
@@ -104,11 +107,11 @@ const shipmentStatusController = {
       res.status(200).json({ message: 'Payment approved successfully', status });
     } catch (err) {
       console.error('Error approving payment:', err);
-      next(err instanceof CustomError ? err : new CustomError(500, 'Internal Server Error'));
+     
     }
   },
 
-  async uploadPaymentReceipt(req: Request, res: Response, next: NextFunction) {
+  async uploadPaymentReceipt(req: Request, res: Response, next: NextFunction):Promise<any> {
     const { shipmentStatusId } = req.params;
 
     try {
@@ -129,7 +132,7 @@ const shipmentStatusController = {
       res.status(200).json({ message: 'Receipt uploaded', status: updated });
     } catch (err) {
       console.error('Error uploading receipt:', err);
-      next(err instanceof CustomError ? err : new CustomError(500, 'Internal Server Error'));
+      
     }
   }
 };

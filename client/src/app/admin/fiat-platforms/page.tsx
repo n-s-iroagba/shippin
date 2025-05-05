@@ -20,7 +20,7 @@ export default function FiatPlatformsPage() {
       const data = await ApiService.listFiatPlatforms();
       setPlatforms(data);
       setError('');
-    } catch (err: any) {
+    } catch (err) {
       setError('Unable to load fiat platforms. Please try again later.');
       console.error('Failed to fetch fiat platforms:', err);
     } finally {
@@ -40,7 +40,8 @@ export default function FiatPlatformsPage() {
       setPlatforms(platforms.filter(p => p.id !== id));
       setSuccessMessage('Fiat platform deleted successfully');
       setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (err: any) {
+    } catch (error:unknown) {
+      const err = error as {status:number}
       if (err.status === 403) {
         setError('You do not have permission to delete this platform.');
       } else if (err.status === 404) {

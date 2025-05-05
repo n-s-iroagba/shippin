@@ -7,6 +7,7 @@ const Loading: React.FC = () => {
         <div className="w-12 h-12 border-4 border-lighter-blue border-t-primary-blue rounded-full animate-spin"></div>
         <p className="text-dark-blue text-lg font-semibold">Loading...</p>
       </div>
+      <p style={{color:'black'}}>skkkkkk</p>
     </div>
   );
 };

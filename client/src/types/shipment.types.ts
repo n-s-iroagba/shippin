@@ -4,18 +4,18 @@ export type FreightType = 'AIR' | 'SEA' | 'LAND';
 export type PaymentStatus = 'YET_TO_BE_PAID' | 'PENDING' | 'PAID' | 'NO_NEED_FOR_PAYMENT';
 
 export interface ShipmentStatus {
-  id: number;
+  id?: number;
   feeInDollars: number | null;
   amountPaid: number;
   dateAndTime: string;
   requiresFee: boolean;
-  paymentStatus: PaymentStatus;
+  paymentStatus: PaymentStatus|null;
   paymentDate: string | null;
-  paymentReceipt?: string;
+  paymentReceipt: string|null;
   percentageNote?: number | null;
   title: string;
   carrierNote?: string;
-  supportingDocuments?: string[];
+  supportingDocument?: string;
 }
 
 export interface ShipmentDetails {
@@ -33,5 +33,5 @@ export interface ShipmentDetails {
   dimensionInInches: string;
   receipientEmail: string;
   adminId?: number;
-  shipmentStatus?: ShipmentStatus[];
+  shipmentStatuses?: ShipmentStatus[];
 }

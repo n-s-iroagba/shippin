@@ -1,10 +1,13 @@
-import { Model, DataTypes } from 'sequelize';
+import { Model, DataTypes, ForeignKey, NonAttribute } from 'sequelize';
 import { sequelize } from '../config/database';
+import { Admin } from './Admin';
+import { ShipmentStatus } from './ShipmentStatus';
 
 export interface ShipmentDetailsAttributes {
-  id: string;
+  id: number;
   shipmentID: string;
-  adminId: string;
+  adminId: ForeignKey<Admin['id']>;
+  admin?:NonAttribute<Admin>
   senderName: string;
   sendingPickupPoint: string;
   shippingTakeoffAddress: string;
@@ -16,12 +19,14 @@ export interface ShipmentDetailsAttributes {
   weight: number;
   dimensionInInches: string;
   receipientEmail: string;
+shipmentStatuses?:NonAttribute<ShipmentStatus[]>
 }
 
 export class ShipmentDetails extends Model<ShipmentDetailsAttributes> implements ShipmentDetailsAttributes {
-  id!: string;
+  id!: number;
   shipmentID!: string;
-  adminId!: string;
+  adminId!: ForeignKey<Admin['id']>;
+  admin?:NonAttribute<Admin>
   senderName!: string;
   sendingPickupPoint!: string;
   shippingTakeoffAddress!: string;
@@ -37,8 +42,8 @@ export class ShipmentDetails extends Model<ShipmentDetailsAttributes> implements
 
 ShipmentDetails.init({
   id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
+    type: DataTypes.INTEGER,
+     autoIncrement:true,
     primaryKey: true
   },
   shipmentID: {
@@ -47,7 +52,7 @@ ShipmentDetails.init({
     unique: true
   },
   adminId: {
-    type: DataTypes.UUID,
+    type: DataTypes.INTEGER,
     allowNull: false,
     references: {
       model: 'Admins',
