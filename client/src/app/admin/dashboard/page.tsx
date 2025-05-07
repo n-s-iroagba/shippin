@@ -2,11 +2,11 @@
 
 import Loading from "@/components/Loading";
 import { CreateShipmentModal } from "@/components/ShipmentModals";
-import { adminShipmentUrl, SERVER_URL } from "@/data/urls";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 // import {jwtDecode} from "jwt-decode";
 import { ShipmentDetails } from "@/types/shipment.types";
+import { ApiService } from "@/services/api.service";
 
 
 const ShipmentDashboard: React.FC = () => {
@@ -21,7 +21,7 @@ const ShipmentDashboard: React.FC = () => {
   const adminId = 1
 
   useEffect(() => {
-    let result = [...shipments];
+    let result:ShipmentDetails[] = [...shipments];
 
     // Search filter
     if (searchTerm) {
@@ -38,7 +38,7 @@ const ShipmentDashboard: React.FC = () => {
       );
     }
 
- 
+
     setFilteredShipments(result);
   }, [shipments, searchTerm, filterStatus, dateRange]);
   const router = useRouter()
@@ -52,25 +52,11 @@ const ShipmentDashboard: React.FC = () => {
   useEffect(() => {
     const fetchShipments = async () => {
       try {
-  //       const token = localStorage.getItem('admin_token');
-  //       if (!token) {
-  //         setError("Authentication token missing");
-  //         router.push('/admin/login');
-  //         return;
-  //       }
-        const response = await fetch(`${SERVER_URL}/api/admin/shipment/${adminId}`
-        //   , {
-        //   headers: {
-        //     'Authorization': `Bearer ${token}`
-        //   }
-        // }
-      );
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Failed to fetch shipments");
+        const {shipments =[], error} = await ApiService.listShipments(adminId);
+        if (error) {
+          throw error
         }
-        const data = await response.json();
-        setShipments(data);
+        setShipments(shipments);
       } catch (err) {
         console.error(err);
         setError("Error fetching shipments");
@@ -90,7 +76,7 @@ const ShipmentDashboard: React.FC = () => {
 
   // if (loadingAuth) return <Loading/>;
   if (!adminId) return null;
-  // if (loading) return <Loading/>;
+  if (loading) return <Loading/>;
   if (error) return <p className="text-center text-red-500 text-lg">{error}</p>;
 
   return (

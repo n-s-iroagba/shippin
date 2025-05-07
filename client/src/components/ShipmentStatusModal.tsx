@@ -1,4 +1,5 @@
-import { SERVER_URL, stepUrl } from "@/data/urls";
+
+import { ApiService } from "@/services/api.service";
 import { ShipmentStatus } from "@/types/shipment.types";
 import React, { useState } from "react";
 
@@ -19,32 +20,53 @@ export const AddShipmentStatusModal: React.FC<ModalProps> = ({
     paymentDate: null,
     percentageNote: null,
     paymentReceipt: null,
-    paymentStatus:'NO_NEED_FOR_PAYMENT',
+    paymentStatus: "NO_NEED_FOR_PAYMENT",
     requiresFee: false,
     supportingDocument: "",
   });
+
+  const [supportingFile, setSupportingFile] = useState<File | null>(null);
 
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >
   ) => {
-    const { name, type, value } = e.target;
-    setFormData({ ...formData, [name]: type === "checkbox" ? true : value });
+    const { name, type, value,  } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === "checkbox" ? true : value,
+    });
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSupportingFile(file);
+      setFormData((prev) => ({ ...prev, supportingDocument: file.name }));
+    }
   };
 
   const handleSubmit = async () => {
     try {
-      const response = await fetch(`${SERVER_URL}/api/admin/status/${shipmentId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, shipmentDetailsId: shipmentId }),
+      const data = new FormData();
+
+      // Append each form field
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          data.append(key, String(value));
+        }
       });
-      if (!response.ok) throw new Error("Failed to add shipment status");
-      window.location.reload();
+
+      if (supportingFile) {
+        data.append("file", supportingFile); // actual file key may vary based on your backend
+      }
+
+      await ApiService.createStatus(shipmentId, data); // Adjust if ApiService requires special handling
+
       onClose();
     } catch (error) {
-      console.error("Error creating shipment status:", error);
+      console.error("Failed to submit status:", error);
     }
   };
 
@@ -107,13 +129,15 @@ export const AddShipmentStatusModal: React.FC<ModalProps> = ({
           </>
         )}
 
-        <input
-          className="w-full p-2 border rounded mb-4"
-          placeholder="Supporting Document URL"
-          name="supportingDocument"
-          value={formData.supportingDocument}
-          onChange={handleChange}
-        />
+        <label className="block mb-2">
+          Supporting Document:
+          <input
+            type="file"
+            name="supportingDocument"
+            onChange={handleFileChange}
+            className="w-full p-2 border rounded"
+          />
+        </label>
 
         <div className="flex justify-between">
           <button
@@ -154,6 +178,8 @@ export default function EditShipmentStatusModal({
     supportingDocument: step.supportingDocument ?? "",
   });
 
+  const [supportingFile, setSupportingFile] = useState<File|null>(null)
+
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -163,22 +189,36 @@ export default function EditShipmentStatusModal({
     setFormData({ ...formData, [name]: type === "checkbox" ? true : value });
   };
 
+
+
+
   const handleSubmit = async () => {
     try {
-      const response = await fetch(`${stepUrl}/${step.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+      const data = new FormData();
+
+      // Append each form field
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          data.append(key, String(value));
+        }
       });
 
-      if (!response.ok) throw new Error("Failed to update shipment");
+      if (supportingFile) {
+        data.append("file", supportingFile); // actual file key may vary based on your backend
+      }
+     if(step.id){
+      await ApiService.updateStatus(step.id, data);
+     }
+    
 
-      window.location.reload();
       onClose();
     } catch (error) {
-      console.error("Error updating shipment:", error);
+
+      console.error("Failed to submit status:", error);
     }
   };
+
+  
 
   return (
     <div className="fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50 z-50">
@@ -307,10 +347,12 @@ export default function EditShipmentStatusModal({
         <label className="block mb-4">
           Supporting Document:
           <input
-            type="text"
+            type="file"
             name="supportingDocument"
-            value={formData.supportingDocument ?? ""}
-            onChange={handleChange}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              setSupportingFile(file??null)
+            }}
             className="w-full p-2 border rounded"
           />
         </label>

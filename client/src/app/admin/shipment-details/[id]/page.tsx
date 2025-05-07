@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { DeleteShipmentModal, EditShipmentModal } from "@/components/ShipmentModals";
 import EditShipmentStatusModal, { AddShipmentStatusModal, DeleteShipmentStatusModal } from "@/components/ShipmentStatusModal";
 import { useParams } from "next/navigation";
-import { adminShipmentUrl, SERVER_URL, shipmentUrl } from "@/data/urls";
 import Loading from "@/components/Loading";
 import { ShipmentDetails, ShipmentStatus } from "@/types/shipment.types";
+import { ApiService } from "@/services/api.service";
 
 
 
@@ -18,6 +18,7 @@ const AdminShipmentDetails = () => {
     const [showEditShipmentStatusModal, setShowEditShipmentStatusModal] = useState(false);
     const [showDeleteShipmentStatusModal, setShowDeleteShipmentStatusModal] = useState(false);
     const [showAddShipmentStatusModal, setShowAddShipmentStatusModal] = useState(false);
+    const [theStatuses, setStatuses] = useState <ShipmentStatus[]>([])
     const params = useParams();
     const shipmentId = params.id;
     const [loading, setLoading] = useState(true);
@@ -30,21 +31,11 @@ const AdminShipmentDetails = () => {
             try {
                 setLoading(true);
                 setError(null);
-                const token = localStorage.getItem('admin_token');
-                const response = await fetch(`${SERVER_URL}/api/admin/shipmentdetails/${shipmentId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    const errorMessage = errorData.message || "Failed to fetch shipment details";
-                    throw new Error(errorMessage);
-                }
+                const { shipment,statuses } = await ApiService.getShipmentDetails(Number(shipmentId));
 
-                const data = await response.json();
-                setShipmentDetails(data);
+                setShipmentDetails(shipment);
+                setStatuses(statuses)
             } catch (error) {
                 setError("An error occurred, try again later");
                 console.error("Fetch Error:", error);
@@ -85,7 +76,7 @@ const AdminShipmentDetails = () => {
 
                 <div className="flex justify-evenly">
                     <div className="my-2">
-                        <button 
+                        <button
                             onClick={() => setShowEditModal(true)}
                             className="bg-blue-500 text-white p-1 rounded"
                         >
@@ -93,7 +84,7 @@ const AdminShipmentDetails = () => {
                         </button>
                     </div>
                     <div className="my-2">
-                        <button 
+                        <button
                             onClick={() => setShowDeleteModal(true)}
                             className="bg-red-500 text-white p-1 rounded"
                         >
@@ -106,7 +97,7 @@ const AdminShipmentDetails = () => {
                 <h2 className="text-md font-semibold text-center">Shipment Status</h2>
 
                 <div className="flex justify-center">
-                    <button 
+                    <button
                         onClick={() => setShowAddShipmentStatusModal(true)}
                         className="text-black bg-blue p-1 rounded bg-goldenrod"
                     >
@@ -115,7 +106,7 @@ const AdminShipmentDetails = () => {
                 </div>
 
                 <ul>
-                    {shipmentDetails?.shipmentStatuses?.map((step: ShipmentStatus) => (
+                    {theStatuses.map((step: ShipmentStatus) => (
                         <li key={step.id} className="flex justify-evenly border-b p-1">
                             <div className="flex flex-col w-[60%] justify-between">
                                 <h4 className="text-center font-bold">Status:</h4>
@@ -139,7 +130,7 @@ const AdminShipmentDetails = () => {
                                 </span>
 
                                 <div className="flex justify-center">
-                                    <button 
+                                    <button
                                         onClick={() => {
                                             setShowEditShipmentStatusModal(true);
                                             setSelectedShipmentStatus(step);
@@ -159,11 +150,11 @@ const AdminShipmentDetails = () => {
                                 <div className="flex justify-center gap-2">
                                     {step.requiresFee && step.paymentStatus === 'PENDING' && (
                                         <>
-                                            <button 
+                                            <button
                                                 onClick={async () => {
                                                     const res = await fetch(`/api/shipmentStatus/${step.id}/approve`, {
                                                         method: 'POST',
-                                                        headers: { 
+                                                        headers: {
                                                             'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
                                                             'Content-Type': 'application/json'
                                                         }
@@ -177,11 +168,11 @@ const AdminShipmentDetails = () => {
                                             >
                                                 Approve
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={async () => {
                                                     const reason = prompt('Enter rejection reason:');
                                                     if (!reason) return;
-                                                    
+
                                                     const res = await fetch(`/api/shipmentStatus/${step.id}/reject`, {
                                                         method: 'POST',
                                                         headers: {
@@ -201,7 +192,7 @@ const AdminShipmentDetails = () => {
                                             </button>
                                         </>
                                     )}
-                                    <button 
+                                    <button
                                         onClick={() => {
                                             setShowDeleteShipmentStatusModal(true);
                                             setSelectedShipmentStatus(step);
@@ -218,7 +209,7 @@ const AdminShipmentDetails = () => {
             </div>
 
             {/* Modals */}
-            {showEditModal && <EditShipmentModal shipment={shipmentDetails} onClose={() => setShowEditModal(false)} onUpdate={()=>setShowEditShipmentStatusModal(false)} />}
+            {showEditModal && <EditShipmentModal shipment={shipmentDetails} onClose={() => setShowEditModal(false)} onUpdate={() => setShowEditShipmentStatusModal(false)} />}
             {showDeleteModal && <DeleteShipmentModal shipment={shipmentDetails} onClose={() => setShowDeleteModal(false)} />}
             {showAddShipmentStatusModal && <AddShipmentStatusModal onClose={() => setShowAddShipmentStatusModal(false)} shipmentId={Number(shipmentDetails.id)} />}
             {showEditShipmentStatusModal && selectedShipmentStatus && (

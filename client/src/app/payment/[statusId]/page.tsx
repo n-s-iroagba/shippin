@@ -27,17 +27,21 @@ export default function PaymentPage({ params }: { params: { statusId: string } }
   useEffect(() => {
     const fetchPaymentData = async () => {
       try {
-        const data = await ApiService.getPaymentInit(params.statusId);
-        setPaymentData(data);
-        setError('');
-      } catch (err: any) {
-        if (err.status === 404) {
-          setError('Payment information not found.');
-        } else if (err.status === 400) {
-          setError('Payment is not required or already completed.');
-        } else {
-          setError('Unable to load payment options. Please try again later.');
+        const response = await ApiService.getPaymentInit(params.statusId);
+        if (response.error) {
+          if (response.error.includes('not found')) {
+            setError('Payment information not found.');
+          } else if (response.error.includes('not required')) {
+            setError('Payment is not required or already completed.');
+          } else {
+            setError('Unable to load payment options. Please try again later.');
+          }
+          return;
         }
+        setPaymentData(response.data);
+        setError('');
+      } catch (err) {
+        setError('Unable to load payment options. Please try again later.');
       } finally {
         setLoading(false);
       }

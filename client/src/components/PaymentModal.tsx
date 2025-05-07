@@ -23,7 +23,7 @@ export default function PaymentModal({ statusId, onClose, onSuccess }: PaymentMo
     setError(null);
 
     try {
-      await ApiService.uploadReceipt(statusId, file);
+      await ApiService.uploadPaymentReceipt(statusId, file);
       onSuccess();
     } catch (err: any) {
       if (err.message === 'Status not found') {

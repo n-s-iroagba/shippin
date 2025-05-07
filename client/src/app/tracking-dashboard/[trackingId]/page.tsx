@@ -13,13 +13,14 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useParams } from "next/navigation";
 ;
-import { SERVER_URL, trackShipmentUrl } from "@/data/urls";
 import Loading from "@/components/Loading";
 import { ShipmentDetails, ShipmentStatus } from "@/types/shipment.types";
+import { ApiService } from "@/services/api.service";
 
 const ShipmentTrackingDashboard: React.FC = () => {
   const [shipmentDetails, setShipmentDetails] = useState<ShipmentDetails | null>(null);
   const params = useParams();
+  const [tempStatuses,setStatuses] = useState<ShipmentStatus[]>([])
   const trackingId = params.trackingId;
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -40,11 +41,10 @@ const ShipmentTrackingDashboard: React.FC = () => {
 
     const fetchShipmentDetails = async () => {
       try {
-        const response = await fetch(`${SERVER_URL}/ap/track/shipment/${trackingId}`);
-        if (!response.ok) throw new Error("Failed to fetch shipment details");
+        const {statuses,shipment} = await ApiService.trackShipment(trackingId as string);
         
-        const data: ShipmentDetails & { shipmentStatuses: ShipmentStatus[] } = await response.json();
-        setShipmentDetails(data);
+        setShipmentDetails(shipment);
+        setStatuses(statuses)
       } catch (error) {
         alert("An error occurred, try again later");
         console.error("Fetch Error:", error);
@@ -69,15 +69,16 @@ const ShipmentTrackingDashboard: React.FC = () => {
         </div>
 
         {/* Payment Alert */}
-        {shipmentDetails.shipmentStatuses && shipmentDetails.shipmentStatuses.some(s => s.paymentStatus === 'PENDING') && (
-          <div className="bg-gradient-to-r from-orange-50 to-amber-50 border-l-4 border-orange-400 text-orange-800 p-4 mb-8 rounded-lg flex items-start gap-3">
-            <FontAwesomeIcon icon={faDollarSign} className="text-lg mt-1 flex-shrink-0" />
-            <div>
-              <p className="font-semibold text-sm sm:text-base">Payment Required</p>
-              <p className="text-xs sm:text-sm mt-1">Complete payment to continue shipment processing</p>
-            </div>
-          </div>
-        )}
+        {Array.isArray(tempStatuses) && tempStatuses.some(s => s.paymentStatus === 'PENDING') && (
+  <div className="bg-gradient-to-r from-orange-50 to-amber-50 border-l-4 border-orange-400 text-orange-800 p-4 mb-8 rounded-lg flex items-start gap-3">
+    <FontAwesomeIcon icon={faDollarSign} className="text-lg mt-1 flex-shrink-0" />
+    <div>
+      <p className="font-semibold text-sm sm:text-base">Payment Required</p>
+      <p className="text-xs sm:text-sm mt-1">Complete payment to continue shipment processing</p>
+    </div>
+  </div>
+)}
+
 
         {/* Progress Timeline */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
@@ -88,7 +89,7 @@ const ShipmentTrackingDashboard: React.FC = () => {
   <div className="relative overflow-hidden">
     <div ref={scrollContainerRef} className="flex overflow-x-auto pb-4 scroll-smooth">
       <div className="flex min-w-max w-full justify-between">
-        {(shipmentDetails.shipmentStatuses || []).map((status, index, array) => {
+        {tempStatuses.map((status, index, array) => {
           const isComplete = status.paymentStatus === 'PAID';
           const isCurrent = index === array.length - 1;
 

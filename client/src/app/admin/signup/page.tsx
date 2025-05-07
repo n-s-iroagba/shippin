@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { authApi } from '@/utils/apiUtils';
 import AuthForm from '@/components/AuthForm';
+import { ApiService } from '@/services/api.service';
 
 export default function SignupPage() {
   const [error, setError] = useState('');
@@ -16,16 +16,16 @@ export default function SignupPage() {
     }
 
     try {
-      const { data, error: apiError } = await authApi.signup({
+      const response = await ApiService.signup({
         name: formData.name,
         email: formData.email,
         password: formData.password,
       });
 
-      if (data?.verificationToken) {
-        router.push(`/admin/verify-email/${data.verificationToken}`);
-      } else if (apiError) {
-        if (apiError.includes('already exists')) {
+      if (response.verificationToken) {
+        router.push(`/admin/verify-email/${response.verificationToken}`);
+      } else if (response.error) {
+        if (response.error.message.includes('already exists')) {
           setError('An admin with this email already exists. Please try logging in instead.');
         } else {
           setError('An error occurred. Please try again later.');

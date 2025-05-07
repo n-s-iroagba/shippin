@@ -34,8 +34,12 @@ export const createTemplate = async (req: Request, res: Response) => {
     const file = req.file;
 
     if (!name || !file) {
-      throw new CustomError(400, 'Invalid input');
+      throw new CustomError(400, 'Name and file are required');
     }
+
+    // Ensure uploads directory exists
+    const uploadsDir = './uploads/templates';
+    await fs.mkdir(uploadsDir, { recursive: true });
 
     const template = await DocumentTemplate.create({
       adminId,
@@ -48,7 +52,11 @@ export const createTemplate = async (req: Request, res: Response) => {
     if (req.file) {
       await fs.unlink(req.file.path).catch(console.error);
     }
-    throw error;
+    if (error instanceof CustomError) {
+      res.status(error.statusCode || 500).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Failed to create template' });
+    }
   }
 };
 

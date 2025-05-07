@@ -11,16 +11,16 @@ export default function LoginPage() {
 
   const handleSubmit = async (formData: Record<string, string>) => {
     try {
-      const { data, error: apiError } = await authApi.login({
+      const response = await ApiService.login({
         email: formData.email,
         password: formData.password
       });
 
-      if (data?.loginToken) {
-        localStorage.setItem('admin_token', data.loginToken);
+      if (response.token) {
+        localStorage.setItem('admin_token', response.token);
         router.push('/admin/dashboard');
-      } else if (apiError) {
-        handleApiError(apiError, data as {verificationToken:string});
+      } else if (response.error) {
+        handleApiError(response.error, response.data);
       }
     } catch (err) {
       console.error('Login error:', err);

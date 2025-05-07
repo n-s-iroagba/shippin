@@ -3,18 +3,23 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { authApi } from '@/utils/apiUtils';
+import { ApiService } from '@/services/api.service';
+
 
 export default function VerifyEmail() {
   const [verificationCode, setVerificationCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [canResend, setCanResend] = useState(false);
-  const [countdown, setCountdown] = useState(180); // 3 minutes
+  const [countdown, setCountdown] = useState(180);
   const router = useRouter();
-  const params = useParams();
+  const params = useParams(); 
   const verificationToken = params.token as string;
+  const [token, setToken] = useState(verificationToken)
 
+
+ 
+  
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (countdown > 0) {
@@ -33,20 +38,20 @@ export default function VerifyEmail() {
     setLoading(true);
 
     try {
-      const { data, error: apiError } = await authApi.verifyEmail({
+      const response = await ApiService.verifyEmail({
         code: verificationCode,
         verificationToken
       });
 
-      if (data?.loginToken) {
-        localStorage.setItem('admin_token', data.loginToken);
+      if (response.token) {
+        localStorage.setItem('admin_token', response.token);
         alert('Verification successful! You\'re now logged in.');
         router.push('/admin/dashboard');
-      } else if (apiError) {
-        console.error('Verification error:', apiError);
-        if (apiError.includes('Admin not found')) {
+      } else if (response.error) {
+        console.error('Verification error:', response.error);
+        if (response.error.message.includes('Admin not found')) {
           setError('Verification failed. No admin found for this verification link.');
-        } else if (apiError.includes('Invalid token') || apiError.includes('Wrong token')) {
+        } else if (response.error.message.includes('Invalid token') || response.error.message.includes('Wrong token')) {
           setError('Invalid verification code. Please check and try again.');
         } else {
           setError('Something went wrong. Please try again later.');
@@ -65,19 +70,20 @@ export default function VerifyEmail() {
     setLoading(true);
 
     try {
-      const { data, error: apiError } = await authApi.resendVerification({
-        verificationToken
-      });
+      const { verificationToken, error } = await ApiService.resendVerification(
+      token
+      );
 
-      if (data?.verificationToken) {
+      if (verificationToken) {
         setCanResend(false);
         setCountdown(180);
+        setToken(verificationToken)
         alert('New verification code has been sent to your email.');
-      } else if (apiError) {
-        console.error('Resend error:', apiError);
-        if (apiError.includes('Admin not found')) {
+      } else if (error) {
+        console.error('Resend error:', error);
+        if (error.message.includes('Admin not found')) {
           setError('No admin found for this verification link.');
-        } else if (apiError.includes('Invalid token')) {
+        } else if (error.message.includes('Invalid token')) {
           setError('This verification link is invalid or expired. Please sign up again.');
         } else {
           setError('Failed to resend verification code. Please try again later.');

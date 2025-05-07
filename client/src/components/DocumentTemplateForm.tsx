@@ -21,14 +21,22 @@ export default function DocumentTemplateForm({ template, onSuccess, onClose }: D
     setSubmitting(true);
 
     try {
+      if (!name.trim()) {
+        throw new Error('Template name is required');
+      }
+
+      if (!file && !template) {
+        throw new Error('Please select a file');
+      }
+
       const formData = new FormData();
-      formData.append('name', name);
+      formData.append('name', name.trim());
       if (file) formData.append('file', file);
 
       if (template) {
-        await ApiService.updateDocumentTemplate(template.id, formData);
+        await ApiService.updateTemplate(template.id.toString(), formData);
       } else {
-        await ApiService.createDocumentTemplate(formData);
+        await ApiService.createTemplate(formData);
       }
 
       onSuccess();
