@@ -40,6 +40,19 @@ export const signUp = async (req: Request, res: Response): Promise<any> => {
   try {
     const { name, email, password } = req.body;
 
+    // Input validation
+    if (!name || !email || !password) {
+      throw { status: 400, message: "Name, email and password are required" };
+    }
+
+    if (password.length < 8) {
+      throw { status: 400, message: "Password must be at least 8 characters long" };
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw { status: 400, message: "Invalid email format" };
+    }
+
     const existingAdmin = await Admin.findOne({ where: { email } });
     if (existingAdmin) {
       throw { status: 400, message: "Admin with this email already exists" };
@@ -56,7 +69,10 @@ export const signUp = async (req: Request, res: Response): Promise<any> => {
     const { verificationToken } = await createVerificationToken(newAdmin);
     await sendVerificationEmail(newAdmin);
 
-    res.status(201).json({ verificationToken });
+    res.status(201).json({ 
+      message: "Admin account created successfully. Please check your email for verification.",
+      verificationToken 
+    });
   } catch (error) {
     handleError(res, error, "An error occurred during signup");
   }
@@ -65,16 +81,29 @@ export const signUp = async (req: Request, res: Response): Promise<any> => {
 export const verifyEmail = async (req: Request, res: Response): Promise<any> => {
   try {
     const { code, verificationToken } = req.body;
+
+    if (!code || !verificationToken) {
+      throw { status: 400, message: "Verification code and token are required" };
+    }
+
+    if (!/^\d{6}$/.test(code)) {
+      throw { status: 400, message: "Invalid verification code format" };
+    }
+
     const decoded: any = jwt.verify(verificationToken, process.env.JWT_SECRET as string);
+    if (!decoded.adminId) {
+      throw { status: 400, message: "Invalid verification token" };
+    }
 
     const admin = await Admin.findOne({ 
       where: { 
         id: decoded.adminId,
-        verificationToken 
+        verificationToken,
+        isVerified: false
       } 
     });
 
-    if (!admin) throw { status: 404, message: "Admin not found" };
+    if (!admin) throw { status: 404, message: "Admin not found or already verified" };
     if (admin.verificationCode !== code) throw { status: 400, message: "Wrong verification code" };
 
     admin.isVerified = true;

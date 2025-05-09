@@ -13,7 +13,6 @@ export const shipmentController = {
       const shipmentData = { ...req.body, adminId,shipmentID:id };
 
       const shipment = await ShipmentDetails.create(shipmentData);
-      console.log(shipment)
       res.status(201).json(shipment);
     } catch (error) {
       console.error('error in shipment controller',error)
@@ -25,14 +24,12 @@ export const shipmentController = {
     console.log('in list shipment')
     try {
       const adminId = req.params.adminId;
-    
       const shipments = await ShipmentDetails.findAll({
         where: { adminId },
         attributes: ['id', 'shipmentID', 'senderName', 'recipientName', 
                     'receivingAddress', 'freightType', 'expectedTimeOfArrival']
       });
-      console.log('shipments',shipments)
-      res.status(200).json({shipments:shipments});
+      res.json(shipments);
     } catch (error) {
       console.error('error in shipment controller',error)
       res.status(500).json('error occured in shipment controller')
@@ -40,39 +37,27 @@ export const shipmentController = {
   },
 
   async getShipmentDetails(req: Request, res: Response, next: NextFunction) {
+    console.log('in  shipment details')
     try {
       const { id } = req.params;
 
-      const shipment = await ShipmentDetails.findOne({
-        where: { id },
-        include: [{
-          model: ShipmentStatus,
-          attributes: [
-            'id', 'title', 'carrierNote', 'dateAndTime', 
-            'feeInDollars', 'paymentStatus', 'requiresFee',
-            'paymentReceipt', 'amountPaid', 'paymentDate',
-            'percentageNote', 'supportingDocument'
-          ],
-          order: [['dateAndTime', 'ASC']]
-        }]
-      });
-
+        const shipment = await ShipmentDetails.findOne({
+          where: { id },
+          include: [ ShipmentStatus ]   // no `as`
+        });
+  
       if (!shipment) {
         throw new CustomError(404, 'Shipment not found');
       }
-      const statuses = await ShipmentStatus.findAll({where:{
+      const statuses = ShipmentStatus.findAll({where:{
         shipmentDetailsId:shipment.id
       }})
-      console.log(shipment)
+      console.log(statuses)
 
-      res.json({shipment:shipment,statuses:statuses});
+      res.json({shipment,statuses});
     } catch (error) {
-      console.error('Error in getShipmentDetails:', error);
-      if (error instanceof CustomError) {
-        res.status(error.statusCode).json({ error: error.message });
-      } else {
-        res.status(500).json({ error: 'Failed to fetch shipment details' });
-      }
+      console.error('error in shipment controller',error)
+      res.status(500).json('error occured in shipment controller')
     }
   },
 

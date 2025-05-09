@@ -17,7 +17,6 @@ const shipmentStatusController = {
      ...req.body,
         shipmentDetailsId: Number(shipmentId),
       });
-      console.log(status)
       res.status(201).json(status);
     } catch (error) {
       console.error('Error creating shipment statuses:', error);

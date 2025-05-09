@@ -46,11 +46,7 @@ export const fiatPlatformController = {
       res.status(201).json(platform);
     } catch (error: any) {
       console.error('Create fiat platform error:', error);
-      if (error instanceof CustomError) {
-        res.status(error.statusCode).json({ message: error.message });
-      } else {
-        res.status(500).json({ message: 'Failed to create fiat platform' });
-      }
+      res.status(error.status || 500).json({ message: error.message || 'Failed to create fiat platform', errors: error.errors });
     }
   },
 

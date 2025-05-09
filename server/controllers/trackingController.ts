@@ -6,7 +6,7 @@ import { CustomError } from '../CustomError';
 import { sendCustomMail} from '../mailService';
 
 export const trackingController = {
-  async trackShipment(req: Request, res: Response, next: NextFunction):Promise<any> {
+  async trackShipment(req: Request, res: Response, next: NextFunction) {
     console.log('in tracking function')
     try {
       const { trackingId } = req.params;
@@ -20,7 +20,6 @@ export const trackingController = {
         where: { shipmentID: trackingId },
         include: [{
           model: ShipmentStatus,
-          attributes: ['id', 'title', 'carrierNote', 'dateAndTime', 'feeInDollars', 'paymentStatus', 'requiresFee', 'supportingDocument'],
           order: [['dateAndTime', 'ASC']]
         }]
       });
@@ -28,7 +27,7 @@ export const trackingController = {
       if (!shipmentDetails) {
         throw new CustomError(404, 'Tracking ID not found');
       }
-      const statuses = await ShipmentStatus.findAll({where:{
+      const statuses = ShipmentStatus.findAll({where:{
         shipmentDetailsId:shipmentDetails.id
       }})
 
@@ -41,17 +40,26 @@ export const trackingController = {
             recipientName: shipmentDetails.recipientName,
             receivingAddress: shipmentDetails.receivingAddress,
             shipmentID: shipmentDetails.shipmentID,
-            location: { lat, lng }})
+            loction: { lat, lng }
           
-          }catch(error){
-            throw error
-          }
-        }
-      console.log(statuses)
-        return res.status(200).json({shipment:shipmentDetails, statuses:statuses})
+          });
         } catch (error) {
           console.error('Failed to send email:', error);
-          res.status(500).json({message:'error in tracking shipment controller'})
         }
       }
-}
+
+
+      res.json({
+        shipmentDetails,
+        shipmentStatuses: statuses
+      });
+    } catch (error) {
+      console.error('Tracking error:', error);
+      if (error instanceof CustomError && error.message === 'Tracking ID not found') {
+        next(error);
+      } else {
+        next(new CustomError(500, 'Failed to load tracking data'));
+      }
+    }
+  }
+};
