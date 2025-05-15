@@ -7,7 +7,13 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  console.error('Error:', err);
+  const logger = require('../utils/logger').default;
+  logger.error('Error occurred', {
+    error: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method
+  });
 
   if (err instanceof CustomError) {
     return res.status(err.statusCode).json({

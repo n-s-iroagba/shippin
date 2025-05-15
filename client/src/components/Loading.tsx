@@ -1,15 +1,10 @@
-import React from "react";
 
-const Loading: React.FC = () => {
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-white">
-      <div className="flex flex-col items-center space-y-4">
-        <div className="w-12 h-12 border-4 border-lighter-blue border-t-primary-blue rounded-full animate-spin"></div>
-        <p className="text-dark-blue text-lg font-semibold">Loading...</p>
-      </div>
-      <p style={{color:'black'}}>skkkkkk</p>
-    </div>
-  );
-};
+import React from 'react';
+
+const Loading: React.FC = () => (
+  <div className="flex justify-center items-center">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+  </div>
+);
 
 export default Loading;

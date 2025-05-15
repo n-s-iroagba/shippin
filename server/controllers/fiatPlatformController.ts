@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { FiatPlatform } from '../models/FiatPlatform';
 import { CustomError } from '../CustomError';
+import logger from '../utils/logger';
 
 export const fiatPlatformController = {
   async list(req: Request, res: Response) {
@@ -11,7 +12,7 @@ export const fiatPlatformController = {
       const platforms = await FiatPlatform.findAll({ where: { adminId } });
       res.json(platforms);
     } catch (error: any) {
-      console.error('List fiat platforms error:', error);
+      logger.error('List fiat platforms error:', { error});
       res.status(error.status || 500).json({ message: error.message || 'Failed to fetch fiat platforms' });
     }
   },

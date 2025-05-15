@@ -1,8 +1,3 @@
-
-
-
-// Initialize multer storage (customize as needed)
-
 import { Router } from "express";
 import { signUp, login, verifyEmail, resendVerificationToken, forgotPassword, resetPassword } from "./controllers/authController";
 import { listTemplates, createTemplate, updateTemplate, deleteTemplate, downloadTemplate } from "./controllers/documentTemplateController";
@@ -12,12 +7,10 @@ import { trackingController } from "./controllers/trackingController";
 import { createWallet, getWalletsByAdmin, getWalletsByCoinName, updateWallet, deleteWallet } from "./controllers/walletController";
 import { uploadDocument, uploadPayment, uploadTemplate } from "./middleware/upload";
 import shipmentStatusController from "./controllers/ShipmentStatusController";
-import { } from "./middleware/auth";
 import { socialMediaController } from "./controllers/socialMediaController";
 import { getPaymentInit } from "./controllers/paymentController";
+import fs from 'fs';
 
-// Multer middleware configurations
-const uploadSupportingDocs = uploadDocument.array('supportingDocument', 10);
 const uploadReceipt = uploadPayment.single('paymentReceipt');
 
 const router = Router();
@@ -34,28 +27,23 @@ router.delete('/admin/shipment-details/:id',  shipmentController.deleteShipment)
 router.get('/track/shipment/:trackingId',  trackingController.trackShipment);
 
 // Shipment status routes
-router.post('/admin/status/:shipmentId',  uploadSupportingDocs, shipmentStatusController.createStatus);
-router.put('/admin/status/:statusId',  shipmentStatusController.updateStatus);
+router.post('/admin/status/:shipmentId', uploadDocument.single('supportingDocument'), shipmentStatusController.createStatus);
+router.patch('/admin/status/:statusId', uploadDocument.single('supportingDocument'), shipmentStatusController.updateStatus);
 router.delete('/admin/status/:statusId',  shipmentStatusController.deleteShipmentStatus);
-// router.get('/shipments/:shipmentDetailsId/statuses', shipmentStatusController.getShipmentStatusesByShipmentDetailsId);
-router.post(
-  '/statuses/:shipmentStatusId/approve-payment',
-  shipmentStatusController.approvePayment
-);
-router.post(
-  '/statuses/:shipmentStatusId/upload-receipt',
-  uploadReceipt,
-  shipmentStatusController.uploadPaymentReceipt
-);
 
 
-// Original routes remain (assuming no conflicts)
+router.post( '/statuses/:shipmentStatusId/approve-payment',shipmentStatusController.approvePayment);
+router.post('/statuses/:shipmentStatusId/upload-receipt',uploadReceipt,shipmentStatusController.uploadReceipt);
+
+
+
 router.post('/admin/signup', signUp);
 router.post('/admin/login', login);
 router.post('/admin/verify-email', verifyEmail);
 router.post('/admin/resend-verification-token', resendVerificationToken);
 router.post('/admin/forgot-password', forgotPassword);
 router.post('/admin/reset-password', resetPassword);
+
 
 
 
@@ -91,11 +79,19 @@ router.delete('/api/admin/social-media/:id',  socialMediaController.remove);
 router.get('/api/payment/:statusId',getPaymentInit);
 
 // Document Template routes
-router.get('/api/admin/templates',  listTemplates);
-router.post('/api/admin/templates',  uploadTemplate.single('file'), createTemplate);
-router.put('/api/admin/templates/:id',  uploadTemplate.single('file'), updateTemplate);
-router.delete('/api/admin/templates/:id',  deleteTemplate);
-router.get('/api/admin/templates/:id/download',  downloadTemplate);
+router.get('/api/admin/templates', listTemplates);
+router.post('/api/admin/templates', uploadTemplate.single('file'), createTemplate);
+router.put('/api/admin/templates/:id', uploadTemplate.single('file'), updateTemplate);
+router.delete('/api/admin/templates/:id', deleteTemplate);
+router.get('/api/admin/templates/:id/download', downloadTemplate);
+
+// Create directory for uploads if it doesn't exist
+const uploadDirs = ['./uploads/templates', './uploads/supporting-docs'];
+uploadDirs.forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
 
 
 

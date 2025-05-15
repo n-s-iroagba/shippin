@@ -2,12 +2,20 @@ import { Request, Response, NextFunction } from 'express';
 import { ShipmentStatus } from '../models/ShipmentStatus';
 import { ShipmentDetails } from '../models/ShipmentDetails';
 import { CustomError } from '../CustomError';
+import logger from '../utils/logger';
 
 const shipmentStatusController = {
   async createStatus(req: Request, res: Response, next: NextFunction):Promise<any> {
-    console.log('in create status')
+    console.log('about creating shipment status')
     try {
-      const { shipmentId } = req.params;
+      const { shipmentId } = req.params; 
+      console.log(Number(shipmentId))
+      const file = (req as any).file;
+      const data = { ...req.body };
+
+      if (file) {
+        data.supportingDocument = file.path;
+      }
 
       const shipment = await ShipmentDetails.findOne({ where: { id: shipmentId } });
       if (!shipment) {
@@ -19,34 +27,48 @@ const shipmentStatusController = {
       });
       res.status(201).json(status);
     } catch (error) {
-      console.error('Error creating shipment statuses:', error);
+      logger.error('Error creating shipment status:', { error, shipmentId: req.params.shipmentId });
       return res.status(500).json('error in shipmentStatus')
     }
   },
 
   async updateStatus(req: Request, res: Response, next: NextFunction):Promise<any> {
     try {
-      const { shipmentId, statusId } = req.params;
+      const { statusId } = req.params;
+      const file = (req as any).file;
+      const data = { ...req.body };
 
-      const shipment = await ShipmentDetails.findOne({ where: { id: shipmentId } });
-      if (!shipment) {
-        throw new CustomError(404, 'Shipment not found');
-      }
-
-      const [updated] = await ShipmentStatus.update(req.body, {
-        where: { id: statusId, shipmentDetailsId: shipmentId }
-      });
-
-      if (!updated) {
+      // Find the status first
+      const status = await ShipmentStatus.findByPk(statusId);
+      if (!status) {
         throw new CustomError(404, 'Status not found');
       }
 
-      const status = await ShipmentStatus.findByPk(statusId);
-      res.json(status);
+      // Handle file upload if present
+      if (file) {
+        data.supportingDocument = file.path;
+      }
+
+      // Update the status with validated data
+      await status.update({
+        title: data.title,
+        carrierNote: data.carrierNote,
+        dateAndTime: data.dateAndTime,
+        requiresFee: data.requiresFee,
+        feeInDollars: data.requiresFee ? data.feeInDollars : null,
+        supportingDocument: data.supportingDocument || status.supportingDocument
+      });
+
+      // Fetch updated status with associations
+      const updatedStatus = await ShipmentStatus.findByPk(statusId);
+      res.json(updatedStatus);
     } catch (error) {
-      console.error('Error updating shipment statuses:', error);
-    
-      return res.status(500).json('error in shipmentStatus')
+      console.error('Error updating shipment status:', error);
+      if (error instanceof CustomError) {
+        return res.status(500).json({ message: error.message });
+      }
+      console.error(error)
+      return res.status(500).json({ message: 'Error updating shipment status' });
     }
   },
 
@@ -67,7 +89,7 @@ const shipmentStatusController = {
       res.status(200).json(statuses);
     } catch (error) {
       console.error('Error fetching shipment statuses:', error);
-    
+
       return res.status(500).json('error in shipmentStatus')
     }
   },
@@ -89,8 +111,36 @@ const shipmentStatusController = {
     }
   },
 
+  async uploadReceipt(req: Request, res: Response, next: NextFunction):Promise<any> {
+    try {
+      const { id } = req.params;
+      const file = (req as any).file;
+
+      if (!file) {
+        throw new CustomError(400, 'No receipt file uploaded');
+      }
+
+      const status = await ShipmentStatus.findByPk(id);
+      if (!status) {
+        throw new CustomError(404, 'Status not found');
+      }
+
+      await status.update({
+        paymentReceipt: file.path,
+        paymentStatus: 'PENDING'
+      });
+
+      res.json({ message: 'Receipt uploaded successfully' });
+    } catch (error) {
+      console.error('Receipt upload error:', error);
+      if (error instanceof CustomError) throw error;
+      throw new CustomError(500, 'Failed to upload receipt');
+    }
+  },
+
   async approvePayment(req: Request, res: Response, next: NextFunction):Promise<any> {
-    const { shipmentStatusId } = req.params;
+  
+      const { shipmentStatusId } = req.params;
     const { paymentDate, amountPaid } = req.body;
 
     try {
@@ -107,34 +157,10 @@ const shipmentStatusController = {
       res.status(200).json({ message: 'Payment approved successfully', status });
     } catch (err) {
       console.error('Error approving payment:', err);
-     
-    }
-  },
-
-  async uploadPaymentReceipt(req: Request, res: Response, next: NextFunction):Promise<any> {
-    const { shipmentStatusId } = req.params;
-
-    try {
-      const file = (req as Request & { file?: Express.Multer.File }).file;
-      if (!file) {
-        throw new CustomError(400, 'No file uploaded');
-      }
-
-      const status = await ShipmentStatus.findByPk(shipmentStatusId);
-      if (!status) {
-        throw new CustomError(404, 'ShipmentStatus not found');
-      }
-
-      status.paymentReceipt = file.path;
-      status.paymentStatus = 'PENDING';
-      const updated = await status.save();
-
-      res.status(200).json({ message: 'Receipt uploaded', status: updated });
-    } catch (err) {
-      console.error('Error uploading receipt:', err);
-      
+       return res.status(500).json({ message: 'Error updating approving payment' });
     }
   }
-};
+
+}
 
 export default shipmentStatusController;

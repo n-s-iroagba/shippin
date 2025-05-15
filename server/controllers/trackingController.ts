@@ -18,18 +18,15 @@ export const trackingController = {
 
       const shipmentDetails = await ShipmentDetails.findOne({
         where: { shipmentID: trackingId },
-        include: [{
-          model: ShipmentStatus,
-          order: [['dateAndTime', 'ASC']]
-        }]
       });
 
       if (!shipmentDetails) {
         throw new CustomError(404, 'Tracking ID not found');
       }
-      const statuses = ShipmentStatus.findAll({where:{
-        shipmentDetailsId:shipmentDetails.id
-      }})
+      const statuses = await ShipmentStatus.findAll({
+        where: { shipmentDetailsId: shipmentDetails.id },
+        order: [['dateAndTime', 'ASC']]
+      });
 
       const admin = await Admin.findByPk(shipmentDetails.adminId);
       

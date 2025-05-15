@@ -16,17 +16,7 @@ export default function AdminLayout({
       <nav className="bg-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between h-16">
-            <div className="flex space-x-4 items-center">
-              <a href="/admin/dashboard" className={`px-3 py-2 rounded-md`}>
-                Dashboard
-              </a>
-              <a href="/admin/pending-payments" className={`px-3 py-2 rounded-md`}>
-                Pending Payments
-              </a>
-              <a href="/admin/wallets" className={`px-3 py-2 rounded-md`}>
-                Wallets
-              </a>
-            </div>
+    
             <div className="flex items-center">
               <button
                 onClick={() => {

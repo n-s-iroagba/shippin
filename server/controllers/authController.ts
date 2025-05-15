@@ -5,9 +5,10 @@ import { Admin } from "../models/Admin";
 import { sendVerificationEmail, sendResetPasswordEmail } from "../mailService";
 
 import jwt, { Secret, SignOptions } from 'jsonwebtoken';
+import logger from '../utils/logger';
 
 export const generateToken = (payload: any, expiresIn: number = 3600): string => {
-  const secret = process.env.JWT_SECRET as Secret;
+  const secret = process.env.JWT_SECRET as Secret||'ABANA';
 
   if (!secret) {
     throw new Error('JWT_SECRET is not defined');
@@ -17,6 +18,12 @@ export const generateToken = (payload: any, expiresIn: number = 3600): string =>
 
   return jwt.sign(payload, secret, options);
 };
+function generateCode(count: number=6): string {
+    const numbers = Math.floor((Math.random()*1000000))
+    return numbers.toString().padStart(count, '0');
+}
+
+
 const handleError = (res: Response, error: any, defaultMessage: string) => {
   console.error(`Error: ${defaultMessage}:`, error);
   const status = error.status || 500;
@@ -25,14 +32,13 @@ const handleError = (res: Response, error: any, defaultMessage: string) => {
 };
 
 const createVerificationToken = async (admin: Admin) => {
-  const verificationCode = generateToken({id:admin.id,role:'Admin'});
+  const verificationCode = generateCode();
   const verificationToken = generateToken({ adminId: admin.id, code: verificationCode });
 
   admin.verificationCode = verificationCode;
   admin.verificationToken = verificationToken;
   await admin.save();
-
-  return { verificationCode, verificationToken };
+  return verificationToken
 };
 
 // Controller functions
@@ -66,12 +72,12 @@ export const signUp = async (req: Request, res: Response): Promise<any> => {
       isVerified: false
     });
 
-    const { verificationToken } = await createVerificationToken(newAdmin);
+  const token = await createVerificationToken(newAdmin);
     await sendVerificationEmail(newAdmin);
 
     res.status(201).json({ 
       message: "Admin account created successfully. Please check your email for verification.",
-      verificationToken 
+      verificationToken:token,
     });
   } catch (error) {
     handleError(res, error, "An error occurred during signup");
@@ -122,7 +128,9 @@ export const verifyEmail = async (req: Request, res: Response): Promise<any> => 
 
 export const login = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { email, password } = req.body;
+    const { email } = req.body;
+    logger.info('Login attempt', { email });
+    const { password } = req.body;
     const admin = await Admin.findOne({ where: { email } });
 
     if (!admin || !(await bcrypt.compare(password, admin.password))) {
@@ -130,17 +138,16 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     }
 
     if (!admin.isVerified) {
-      const { verificationToken } = await createVerificationToken(admin);
+      await createVerificationToken(admin);
       await sendVerificationEmail(admin);
       return res.status(409).json({
         message: "Email not verified",
-        verificationToken
       });
     }
 
     const loginToken = generateToken(
       { adminId: admin.id, email: admin.email, name: admin.name },
-     
+
     );
 
     res.status(200).json({ loginToken });
@@ -162,7 +169,7 @@ export const resendVerificationToken = async (req: Request, res: Response) => {
     const newToken = await createVerificationToken(admin);
     await sendVerificationEmail(admin);
 
-    res.status(200).json({ verificationToken: newToken.verificationToken });
+    res.status(200).json({ message:'verification token sent' });
   } catch (error) {
     handleError(res, error, "An error occurred during token resend");
   }
@@ -184,6 +191,27 @@ export const forgotPassword = async (req: Request, res: Response) => {
     res.json({ message: "Reset link sent to email" });
   } catch (error) {
     handleError(res, error, "An error occurred during password reset request");
+  }
+};
+
+export const validateResetToken = async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    const decoded: any = jwt.verify(token, process.env.JWT_SECRET as string);
+    const admin = await Admin.findOne({
+      where: {
+        id: decoded.adminId,
+        forgotPasswordToken: token
+      }
+    });
+
+    if (!admin) {
+      throw { status: 404, message: "Invalid or expired token" };
+    }
+
+    res.json({ valid: true });
+  } catch (error) {
+    handleError(res, error, "Invalid token");
   }
 };
 

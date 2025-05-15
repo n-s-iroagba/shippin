@@ -2,55 +2,52 @@ import { SERVER_URL } from "@/data/urls";
 
 
 interface ApiResponse<T> {
-  data?: T;
-  error?: string;
+  data: T;
 }
 
 // Auth API calls
 export const authApi = {
-  signup: async (data: { name: string; email: string; password: string }): Promise<ApiResponse<{ verificationToken: string }>> => {
+  signup: async (data: { name: string; email: string; password: string }): Promise<{ verificationToken: string }> => {
     try {
-      const response = await fetch(`${SERVER_URL}/api/admin/signup`, {
+      const response = await fetch(`${SERVER_URL}/admin/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      const result = await response.json();
-      
-      return response.ok ? { data: result } : { error: result.message };
+      return await response.json()
     } catch (error) {
       console.error(error)
-      return { error: 'An error occurred. Please try again later.' };
+      throw error
     }
   },
 
-  verifyEmail: async (data: { code: string; verificationToken: string }): Promise<ApiResponse<{ loginToken: string }>> => {
+  verifyEmail: async (data: { code: string; verificationToken: string }): Promise<{ loginToken: string }> => {
     try {
-      const response = await fetch(`${SERVER_URL}/api/admin/verify-email`, {
+      const response = await fetch(`${SERVER_URL}/admin/verify-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      const result = await response.json();
-      return response.ok ? { data: result } : { error: result.message };
+      return await response.json();
+
     } catch (error) {
       console.error(error)
-      return { error: 'An error occurred. Please try again later.' };
+      throw error
     }
   },
 
-  login: async (data: { email: string; password: string }): Promise<ApiResponse<{ loginToken: string,verificationToken?:string }>> => {
+  login: async (data: { email: string; password: string }): Promise<ApiResponse<{ loginToken?: string, verificationToken?: string }>> => {
     try {
-      const response = await fetch(`${SERVER_URL}/api/admin/login`, {
+      const response = await fetch(`${SERVER_URL}/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      const result = await response.json();
-      return response.ok ? { data: result } : { error: result.message };
+      return await response.json();
+
     } catch (error) {
       console.error(error)
-      return { error: 'An error occurred. Please try again later.' };
+      throw error
     }
   },
 
@@ -61,11 +58,11 @@ export const authApi = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      const result = await response.json();
-      return response.ok ? { data: result } : { error: result.message };
+      return await response.json();
+
     } catch (error) {
       console.error(error)
-      return { error: 'An error occurred. Please try again later.' };
+      throw error
     }
   },
 
@@ -76,11 +73,11 @@ export const authApi = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      const result = await response.json();
-      return response.ok ? { data: result } : { error: result.message };
+      return await response.json();
+
     } catch (error) {
       console.error(error)
-      return { error: 'An error occurred. Please try again later.' };
+      throw error
     }
   },
 
@@ -91,11 +88,11 @@ export const authApi = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resetToken: token }),
       });
-      const result = await response.json();
-      return response.ok ? { data: result } : { error: result.message };
+      return await response.json();
+
     } catch (error) {
       console.error(error)
-      return { error: 'An error occurred. Please try again later.' };
+      throw error
     }
   },
 
@@ -106,11 +103,11 @@ export const authApi = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      const result = await response.json();
-      return response.ok ? { data: result } : { error: result.message };
+      return await response.json();
+
     } catch (error) {
       console.error(error)
-      return { error: 'An error occurred. Please try again later.' };
+      throw error
     }
   },
 };
@@ -125,46 +122,48 @@ const getAuthHeaders = () => {
 };
 
 export const protectedApi = {
-  get: async <T>(endpoint: string): Promise<ApiResponse<T>> => {
+  get: async <T>(endpoint: string): Promise<T> => {
     try {
       const response = await fetch(`${SERVER_URL}${endpoint}`, {
         headers: getAuthHeaders(),
       });
-      const result = await response.json();
-      return response.ok ? { data: result } : { error: result.message };
+      return await response.json();
+
     } catch (error) {
       console.error(error)
-      return { error: 'An error occurred. Please try again later.' };
+      throw error
     }
   },
 
-  post: async <U,T>(endpoint: string, data: U): Promise<ApiResponse<T>> => {
+  post: async <U, T>(endpoint: string, data: U): Promise<T> => {
+    console.log(`${SERVER_URL}${endpoint}`)
     try {
       const response = await fetch(`${SERVER_URL}${endpoint}`, {
+
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(data),
       });
-      const result = await response.json();
-      return response.ok ? { data: result } : { error: result.message };
+      return await response.json();
+
     } catch (error) {
       console.error(error)
-      return { error: 'An error occurred. Please try again later.' };
+      throw error
     }
   },
 
-  put: async <U,T>(endpoint: string, data: U): Promise<ApiResponse<T>> => {
+  patch: async <U, T>(endpoint: string, data: U): Promise<ApiResponse<T>> => {
     try {
       const response = await fetch(`${SERVER_URL}${endpoint}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: getAuthHeaders(),
         body: JSON.stringify(data),
       });
-      const result = await response.json();
-      return response.ok ? { data: result } : { error: result.message };
+      return await response.json();
+
     } catch (error) {
       console.error(error)
-      return { error: 'An error occurred. Please try again later.' };
+      throw error
     }
   },
 
@@ -174,11 +173,11 @@ export const protectedApi = {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
-      const result = await response.json();
-      return response.ok ? { data: result } : { error: result.message };
+      return await response.json();
+
     } catch (error) {
       console.error(error)
-      return { error: 'An error occurred. Please try again later.' };
+      throw error
     }
   },
 };

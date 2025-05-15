@@ -2,10 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 import { CustomError } from '../CustomError';
 import { ShipmentDetails } from '../models/ShipmentDetails';
 import { ShipmentStatus } from '../models/ShipmentStatus';
+import logger from '../utils/logger';
 
 export const shipmentController = {
   async createShipment(req: Request, res: Response, next: NextFunction) {
       console.log('in create shipment')
+      console.log(req.body)
     try {
       const  id = String( Math.random()*1000000000) + 'WPCFJJ'
 
@@ -15,8 +17,8 @@ export const shipmentController = {
       const shipment = await ShipmentDetails.create(shipmentData);
       res.status(201).json(shipment);
     } catch (error) {
-      console.error('error in shipment controller',error)
-      res.status(500).json('error occured in shipment controller')
+      logger.error('Error in shipment controller:', { error, operation: 'createShipment' });
+      res.status(500).json('error occurred in shipment controller')
     }
   },
 
@@ -31,7 +33,7 @@ export const shipmentController = {
       });
       res.json(shipments);
     } catch (error) {
-      console.error('error in shipment controller',error)
+      logger.error('Error in shipment controller:', { error, operation: 'listShipments' });
       res.status(500).json('error occured in shipment controller')
     }
   },
@@ -41,22 +43,20 @@ export const shipmentController = {
     try {
       const { id } = req.params;
 
-        const shipment = await ShipmentDetails.findOne({
-          where: { id },
-          include: [ ShipmentStatus ]   // no `as`
-        });
-  
+        const shipment = await ShipmentDetails.findByPk(id);
+
       if (!shipment) {
         throw new CustomError(404, 'Shipment not found');
       }
-      const statuses = ShipmentStatus.findAll({where:{
+      console.log(shipment)
+      const statuses = await ShipmentStatus.findAll({where:{
         shipmentDetailsId:shipment.id
       }})
-      console.log(statuses)
+
 
       res.json({shipment,statuses});
     } catch (error) {
-      console.error('error in shipment controller',error)
+      logger.error('Error in shipment controller:', { error, operation: 'getShipmentDetails' });
       res.status(500).json('error occured in shipment controller')
     }
   },
@@ -64,7 +64,7 @@ export const shipmentController = {
   async updateShipment(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-    
+
 
       const [updated] = await ShipmentDetails.update(req.body, {
         where: { id}
@@ -80,7 +80,7 @@ export const shipmentController = {
 
       res.json(shipment);
     } catch (error) {
-      console.error('error in shipment controller',error)
+      logger.error('Error in shipment controller:', { error, operation: 'updateShipment' });
       res.status(500).json('error occured in shipment controller')
     }
   },
@@ -88,7 +88,7 @@ export const shipmentController = {
   async deleteShipment(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-     
+
 
       const deleted = await ShipmentDetails.destroy({
         where: { id}
@@ -104,7 +104,7 @@ export const shipmentController = {
 
       res.json({ message: 'Shipment deleted successfully' });
     } catch (error) {
-      console.error('error in shipment controller',error)
+      logger.error('Error in shipment controller:', { error, operation: 'deleteShipment' });
       res.status(500).json('error occured in shipment controller')
     }
   }

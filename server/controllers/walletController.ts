@@ -1,7 +1,8 @@
 // controllers/shipmentWalletController.ts
 import { Request, Response, NextFunction, Router } from 'express';
-import { ShipmentWallet } from '../models/ShipmentWallet';
+
 import { CustomError } from '../CustomError';
+import ShipmentWallet from '../models/ShipmentWallet';
 
 // Create a new wallet record
 export const createWallet = async (

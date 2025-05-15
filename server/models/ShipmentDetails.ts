@@ -54,10 +54,6 @@ ShipmentDetails.init({
   adminId: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    references: {
-      model: 'Admins',
-      key: 'id'
-    }
   },
   senderName: DataTypes.STRING,
   sendingPickupPoint: DataTypes.STRING,
@@ -76,4 +72,8 @@ ShipmentDetails.init({
 }, {
   sequelize,
   modelName: 'ShipmentDetails'
+});
+ShipmentDetails.hasMany(ShipmentStatus, {
+  foreignKey: 'shipmentDetailsId',
+  as: 'shipmentStatuses'
 });

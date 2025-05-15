@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ApiService } from '@/services/api.service';
+
 import Loading from '@/components/Loading';
 import { CryptoWalletAttributes } from '@/types/crypto-wallet.types';
 import { FiatPlatformAttributes } from '@/types/fiat-platform.types';
@@ -20,9 +20,7 @@ export default function PaymentPage({ params }: { params: { statusId: string } }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [paymentData, setPaymentData] = useState<PaymentInitData | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'crypto' | 'fiat' | null>(null);
-  const [selectedWallet, setSelectedWallet] = useState<CryptoWalletAttributes | null>(null);
-  const [selectedPlatform, setSelectedPlatform] = useState<FiatPlatformAttributes | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(true);
 
   useEffect(() => {
     const fetchPaymentData = async () => {
@@ -68,13 +66,29 @@ export default function PaymentPage({ params }: { params: { statusId: string } }
   if (error) return <div className="text-red-500 p-4">{error}</div>;
   if (!paymentData) return null;
 
+  if (!showPaymentModal) {
+    return <div className="text-center p-4">Payment window closed</div>;
+  }
+
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Payment Required</h1>
-      <div className="mb-6">
-        <h2 className="text-xl">{paymentData.shipmentStatus.title}</h2>
-        <p className="text-lg">Amount: ${paymentData.shipmentStatus.feeInDollars}</p>
-      </div>
+  <>
+    {/* <PaymentModal
+      statusId={params.statusId}
+      onClose={() => setShowPaymentModal(false)}
+      onSuccess={() => {
+        alert('Payment initiated successfully');
+        setShowPaymentModal(false);
+      }}
+      feeInDollars={paymentData?.shipmentStatus.feeInDollars || 0}
+      cryptoWallets={paymentData?.cryptoWallets || []}
+      fiatPlatforms={paymentData?.fiatPlatforms || []}
+    />
+
+    <h1 className="text-2xl font-bold mb-4">Payment Required</h1>
+    <div className="mb-6">
+      <h2 className="text-xl">{paymentData.shipmentStatus.title}</h2>
+      <p className="text-lg">Amount: ${paymentData.shipmentStatus.feeInDollars}</p>
+    </div>
 
       <div className="space-y-4">
         <div>
@@ -180,7 +194,7 @@ export default function PaymentPage({ params }: { params: { statusId: string } }
             )}
           </div>
         )}
-      </div>
-    </div>
+      </div> */}
+    </>
   );
 }

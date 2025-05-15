@@ -73,10 +73,12 @@ const Schedule: React.FC = () => {
         <div className="flex flex-col w-1/3">
           <label className="text-sm font-medium mb-1">To Port</label>
           <select
+            
             value={toPort}
-            onChange={(e) => setToPort(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setToPort(e.target.value)}
+       
             className="text-sm text-black bg-white"
-          >
+          >.
           {portOptions.map((option, idx)=>{
             return <option key={idx} value={option.value}>{option.label}</option>
           }

@@ -13,7 +13,7 @@ import TestimonialCarousel from "@/components/TestimonialCarousel";
 import ContactInfo from "@/components/Contact";
 
 
-export default function H() {
+export default function Home() {
   const images = [
     { src: image1, text: "Automobile Shipping Services" },
     { src: image2, text: "Goods and valuables logistics" },

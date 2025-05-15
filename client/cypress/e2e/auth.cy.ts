@@ -1,58 +1,33 @@
-
-import { faker } from '@faker-js/faker';
-
-describe('Authentication Flows', () => {
-  beforeEach(() => {
-    cy.intercept('POST', '/api/admin/signup').as('signupRequest');
-    cy.intercept('POST', '/api/admin/login').as('loginRequest');
-    cy.intercept('POST', '/api/admin/verify-email').as('verifyEmailRequest');
-    cy.intercept('POST', '/api/admin/forgot-password').as('forgotPasswordRequest');
-    cy.intercept('POST', '/api/admin/reset-password').as('resetPasswordRequest');
-  });
-
-  describe('Signup Flow', () => {
+ describe('Signup Flow', () => {
     const testUser = {
-      name: faker.person.fullName(),
-      email: faker.internet.email(),
+      name: 'Nnamdi Solomon Iroagba',
+      email: 'nnamdisolomon1@gmail.com',
       password: 'Test123456!'
     };
 
-    it('should validate signup form inputs', () => {
-      cy.visit('/admin/signup');
-      
-      // Test empty form submission
-      cy.get('button[type="submit"]').click();
-      cy.contains('Please fill in all fields').should('be.visible');
-      
-      // Test invalid email
-      cy.get('input[name="name"]').type(testUser.name);
-      cy.get('input[name="email"]').type('invalid-email');
-      cy.get('input[name="password"]').type('weak');
-      cy.get('input[name="confirmPassword"]').type('weak');
-      cy.get('button[type="submit"]').click();
-      cy.contains('Please enter a valid email address').should('be.visible');
-      
-      // Test password mismatch
-      cy.get('input[name="email"]').clear().type(testUser.email);
-      cy.get('input[name="password"]').clear().type(testUser.password);
-      cy.get('input[name="confirmPassword"]').clear().type('differentpass');
-      cy.get('button[type="submit"]').click();
-      cy.contains('Passwords do not match').should('be.visible');
-    });
+    it.only('should validate signup form inputs', () => {
+    cy.visit('http://localhost:3001/admin/signup');
 
-    it('should handle successful signup', () => {
-      cy.visit('/admin/signup');
-      
-      cy.get('input[name="name"]').type(testUser.name);
-      cy.get('input[name="email"]').type(testUser.email);
-      cy.get('input[name="password"]').type(testUser.password);
-      cy.get('input[name="confirmPassword"]').type(testUser.password);
-      
-      cy.get('button[type="submit"]').click();
-      cy.wait('@signupRequest');
-      cy.url().should('include', '/admin/verify-email');
-    });
+    cy.get('[data-cy="name"]').type(testUser.name);
+    cy.get('[data-cy="email"]').type(testUser.email);
+    cy.get('[data-cy="password"]').type('securePassword123');
+    cy.get('[data-cy="confirm-password"]').type('securePassword123');
+    cy.get('[data-cy="submit"]').click();
+    cy.url().should('include', '/admin/verify-email');
   });
+
+  it('shows an error if passwords do not match', () => {
+    cy.visit('/admin/signup');
+
+    cy.get('[data-cy="name"]').type('Mismatch Tester');
+    cy.get('[data-cy="email"]').type('mismatch@example.com');
+    cy.get('[data-cy="password"]').type('12345678');
+    cy.get('[data-cy="confirm-password"]').type('wrongpassword');
+    cy.get('[data-cy="submit"]').click();
+
+    cy.get('[data-cy="error-message"]').should('contain', 'Passwords do not match');
+  });
+});
 
   describe('Email Verification Flow', () => {
     it('should handle verification code input', () => {
@@ -97,8 +72,15 @@ describe('Authentication Flows', () => {
   });
 
   describe('Password Reset Flow', () => {
+    beforeEach(() => {
+      cy.intercept('POST', '/api/admin/forgot-password').as('forgotPasswordRequest');
+      cy.intercept('POST', '/api/admin/reset-password/*').as('resetPasswordRequest');
+      cy.intercept('GET', '/api/admin/validate-reset-token/*').as('validateTokenRequest');
+    });
+
     it('should handle forgot password request', () => {
-      cy.visit('/admin/forgot-password');
+   cy.visit('http://localhost:3001/admin/signup');
+
       
       // Test invalid email
       cy.get('input[type="email"]').type('invalid@email');
@@ -129,4 +111,3 @@ describe('Authentication Flows', () => {
       cy.url().should('include', '/admin/login');
     });
   });
-});

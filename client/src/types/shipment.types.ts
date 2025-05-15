@@ -1,25 +1,25 @@
 
+
 export type FreightType = 'AIR' | 'SEA' | 'LAND';
 
 export type PaymentStatus = 'YET_TO_BE_PAID' | 'PENDING' | 'PAID' | 'NO_NEED_FOR_PAYMENT';
 
 export interface ShipmentStatus {
-  id?: number;
+  id: number;
+  title: string;
+  dateAndTime: string;
+  carrierNote: string;
+  paymentStatus: PaymentStatus;
+  percentageNote?: number | null;
   feeInDollars: number | null;
   amountPaid: number;
-  dateAndTime: string;
-  requiresFee: boolean;
-  paymentStatus: PaymentStatus|null;
-  paymentDate: string | null;
   paymentReceipt: string|null;
-  percentageNote?: number | null;
-  title: string;
-  carrierNote?: string;
-  supportingDocument?: string;
+  paymentDate: string | null;
+  supportingDocument?: string | File  ;
 }
 
 export interface ShipmentDetails {
-  id?: number;
+  id: number;
   shipmentID: string;
   senderName: string;
   sendingPickupPoint: string;

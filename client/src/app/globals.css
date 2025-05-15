@@ -4,11 +4,30 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #1e3a8a;
-  --primary-blue: #2563eb;
-  --light-blue: #60a5fa;
-  --lighter-blue: #93c5fd;
-  --dark-blue: #1e40af;
+  --foreground: #000000;
+  --primary: #DAA520;
+  --primary-dark: #B8860B;
+  --primary-light: #FFD700;
+  --overlay: rgba(0, 0, 0, 0.75);
+}
+
+/* Modern utility classes */
+.modern-shadow {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.modern-gradient {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+}
+
+.modern-card {
+  @apply bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl;
+}
+
+.modern-button {
+  @apply px-6 py-3 rounded-lg font-medium transition-all duration-300 
+  bg-[#DAA520] hover:bg-[#B8860B] text-white shadow-md hover:shadow-lg 
+  active:scale-95;
 }
 
 body {

@@ -1,6 +1,7 @@
-import { Model, DataTypes, ForeignKey, Optional } from 'sequelize';
+import { Model, DataTypes, ForeignKey, Optional, NonAttribute } from 'sequelize';
 import { sequelize } from '../config/database';
 import { ShipmentDetails } from './ShipmentDetails';
+
 
 
 
@@ -9,6 +10,7 @@ import { ShipmentDetails } from './ShipmentDetails';
 export interface ShipmentStatusAttributes {
   id: string;
   shipmentDetailsId: ForeignKey<ShipmentDetails['id']>;
+  shipmentDetails?:NonAttribute<ShipmentDetails>
   carrierNote: string;
   dateAndTime: Date;
   feeInDollars?: number;
@@ -42,6 +44,7 @@ export class ShipmentStatus
   percentageNote?: string;
   paymentStatus: 'PAID' | 'YET_TO_BE_PAID' | 'PENDING' = 'YET_TO_BE_PAID';
   requiresFee!: boolean;
+  shipmentDetails?:NonAttribute<ShipmentDetails>
   title!: string;
   supportingDocument?: string;
 }
@@ -76,7 +79,3 @@ ShipmentStatus.init({
   sequelize,
   modelName: 'ShipmentStatus'
 });
-
-// Set up associations
-ShipmentStatus.belongsTo(ShipmentDetails);
-ShipmentDetails.hasMany(ShipmentStatus);

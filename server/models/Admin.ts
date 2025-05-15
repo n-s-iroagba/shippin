@@ -1,7 +1,7 @@
 import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../config/database";
 import { ShipmentDetails } from "./ShipmentDetails";
-import { ShipmentWallet } from "./ShipmentWallet";
+
 
 export class Admin extends Model {
   public id!: number;

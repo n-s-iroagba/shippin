@@ -3,52 +3,110 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authApi } from '@/utils/apiUtils';
-import AuthForm from '@/components/AuthForm';
+import ErrorAlert from '@/components/ErrorAlert';
 
 export default function SignupPage() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
 
-  const handleSubmit = async (formData: Record<string, string>) => {
-    if (formData.password !== formData.confirmPassword) {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
     try {
-      const { data, error: apiError } = await authApi.signup({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
+      const {verificationToken } = await authApi.signup({
+        name,
+        email,
+        password,
       });
-
-      if (data?.verificationToken) {
-        router.push(`/admin/verify-email/${data.verificationToken}`);
-      } else if (apiError) {
-        if (apiError.includes('already exists')) {
-          setError('An admin with this email already exists. Please try logging in instead.');
-        } else {
-          setError('An error occurred. Please try again later.');
-        }
+   
+        router.push(`/admin/verify-email/${verificationToken}`);
+     
       }
-    } catch (err) {
+  catch (err) {
       console.error('Signup error:', err);
       setError('An error occurred. Please try again later.');
     }
   };
 
   return (
-    <AuthForm
-      title="Admin Signup"
-      fields={[
-        { name: 'name', type: 'text', label: 'Name', required: true },
-        { name: 'email', type: 'email', label: 'Email', required: true },
-        { name: 'password', type: 'password', label: 'Password', required: true, minLength: 8 },
-        { name: 'confirmPassword', type: 'password', label: 'Confirm Password', required: true }
-      ]}
-      onSubmit={handleSubmit}
-      error={error}
-      buttonText="Sign Up"
-    />
+    <div className="min-h-screen flex items-center justify-center bg-white p-4">
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-md bg-white rounded-2xl shadow-md p-8 space-y-6 border-t-4 border-yellow-500"
+      >
+        <h2 className="text-2xl font-bold text-center">Admin Signup</h2>
+
+        {error && <ErrorAlert error={error}/>}
+
+        <div>
+          <label className="block mb-1 font-medium text-gray-700">Full Name</label>
+          <input
+            name="name"
+            type="text"
+            required
+            data-cy="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
+          />
+        </div>
+
+        <div>
+          <label className="block mb-1 font-medium text-gray-700">Email</label>
+          <input
+            name="email"
+            type="email"
+            required
+            data-cy="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
+          />
+        </div>
+
+        <div>
+          <label className="block mb-1 font-medium text-gray-700">Password</label>
+          <input
+            name="password"
+            type="password"
+            required
+            data-cy="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
+          />
+        </div>
+
+        <div>
+          <label className="block mb-1 font-medium text-gray-700">Confirm Password</label>
+          <input
+            name="confirmPassword"
+            type="password"
+            required
+            data-cy="confirm-password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
+          />
+        </div>
+
+        <button
+          type="submit"
+          data-cy="submit"
+          className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded shadow transition"
+        >
+          Sign Up
+        </button>
+      </form>
+    </div>
   );
 }
