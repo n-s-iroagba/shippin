@@ -1,7 +1,7 @@
 import { Model, DataTypes, ForeignKey, NonAttribute } from 'sequelize';
 import { sequelize } from '../config/database';
 import { Admin } from './Admin';
-import { ShipmentStatus } from './ShipmentStatus';
+import { ShippingStage } from './ShippingStage';
 
 export interface ShipmentDetailsAttributes {
   id: number;
@@ -19,7 +19,7 @@ export interface ShipmentDetailsAttributes {
   weight: number;
   dimensionInInches: string;
   receipientEmail: string;
-shipmentStatuses?:NonAttribute<ShipmentStatus[]>
+shippingStagees?:NonAttribute<ShippingStage[]>
 }
 
 export class ShipmentDetails extends Model<ShipmentDetailsAttributes> implements ShipmentDetailsAttributes {
@@ -72,8 +72,4 @@ ShipmentDetails.init({
 }, {
   sequelize,
   modelName: 'ShipmentDetails'
-});
-ShipmentDetails.hasMany(ShipmentStatus, {
-  foreignKey: 'shipmentDetailsId',
-  as: 'shipmentStatuses'
 });

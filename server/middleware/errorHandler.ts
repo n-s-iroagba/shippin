@@ -16,7 +16,7 @@ export const errorHandler = (
   });
 
   if (err instanceof CustomError) {
-    return res.status(err.statusCode).json({
+    return res.status(err.code).json({
       success: false,
       message: err.message,
       timestamp: new Date().toISOString(),

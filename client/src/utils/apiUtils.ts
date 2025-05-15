@@ -181,3 +181,64 @@ export const protectedApi = {
     }
   },
 };
+
+export const ApiUtis = {
+  get: async <T>(endpoint: string): Promise<T> => {
+    try {
+      const response = await fetch(`${SERVER_URL}${endpoint}`, {
+         headers: { 'Content-Type': 'application/json' },
+      });
+      return await response.json();
+
+    } catch (error) {
+      console.error(error)
+      throw error
+    }
+  },
+
+  post: async <U, T>(endpoint: string, data: U): Promise<T> => {
+    console.log(`${SERVER_URL}${endpoint}`)
+    try {
+      const response = await fetch(`${SERVER_URL}${endpoint}`, {
+
+        method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
+
+    } catch (error) {
+      console.error(error)
+      throw error
+    }
+  },
+
+  patch: async <U, T>(endpoint: string, data: U): Promise<ApiResponse<T>> => {
+    try {
+      const response = await fetch(`${SERVER_URL}${endpoint}`, {
+        method: 'PATCH',
+         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
+
+    } catch (error) {
+      console.error(error)
+      throw error
+    }
+  },
+
+  delete: async <T>(endpoint: string): Promise<ApiResponse<T>> => {
+    try {
+      const response = await fetch(`${SERVER_URL}${endpoint}`, {
+        method: 'DELETE',
+         headers: { 'Content-Type': 'application/json' },
+      });
+      return await response.json();
+
+    } catch (error) {
+      console.error(error)
+      throw error
+    }
+  },
+};

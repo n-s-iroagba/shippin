@@ -29,7 +29,7 @@ const ShipmentDashboard: React.FC = () => {
     }
     if (filterStatus !== 'all') {
       result = result.filter(s => 
-        s.shipmentStatuses?.some(status => status.paymentStatus === filterStatus)
+        s.shippingStagees?.some(status => status.paymentStatus === filterStatus)
       );
     }
     setFilteredShipments(result);

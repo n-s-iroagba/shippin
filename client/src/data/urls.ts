@@ -11,4 +11,4 @@ export const trackShipmentUrl = `${SERVER_URL}/api/shipments/tracking`
 export const adminShipmentUrl = `${SERVER_URL}/api/shipments/admin`
 
 
-export const stepUrl = `${SERVER_URL}/api/shipmentStatus`
+export const stepUrl = `${SERVER_URL}/api/shippingStage`

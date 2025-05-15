@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { ShipmentStatus } from '../models/ShipmentStatus';
+import { ShippingStage } from '../models/ShippingStage';
 import { ShipmentDetails } from '../models/ShipmentDetails';
 import { CustomError } from '../CustomError';
 import logger from '../utils/logger';
 
-const shipmentStatusController = {
+const shippingStageController = {
   async createStatus(req: Request, res: Response, next: NextFunction):Promise<any> {
     console.log('about creating shipment status')
     try {
@@ -21,14 +21,14 @@ const shipmentStatusController = {
       if (!shipment) {
         throw new CustomError(404, 'Shipment not found');
       }
-      const status = await ShipmentStatus.create({
+      const status = await ShippingStage.create({
      ...req.body,
         shipmentDetailsId: Number(shipmentId),
       });
       res.status(201).json(status);
     } catch (error) {
       logger.error('Error creating shipment status:', { error, shipmentId: req.params.shipmentId });
-      return res.status(500).json('error in shipmentStatus')
+      return res.status(500).json('error in shippingStage')
     }
   },
 
@@ -39,7 +39,7 @@ const shipmentStatusController = {
       const data = { ...req.body };
 
       // Find the status first
-      const status = await ShipmentStatus.findByPk(statusId);
+      const status = await ShippingStage.findByPk(statusId);
       if (!status) {
         throw new CustomError(404, 'Status not found');
       }
@@ -60,7 +60,7 @@ const shipmentStatusController = {
       });
 
       // Fetch updated status with associations
-      const updatedStatus = await ShipmentStatus.findByPk(statusId);
+      const updatedStatus = await ShippingStage.findByPk(statusId);
       res.json(updatedStatus);
     } catch (error) {
       console.error('Error updating shipment status:', error);
@@ -72,7 +72,7 @@ const shipmentStatusController = {
     }
   },
 
-  async getShipmentStatusesByShipmentDetailsId(req: Request, res: Response, next: NextFunction):Promise<any> {
+  async getShippingStageesByShipmentDetailsId(req: Request, res: Response, next: NextFunction):Promise<any> {
     const { shipmentDetailsId } = req.params;
 
     try {
@@ -81,7 +81,7 @@ const shipmentStatusController = {
         throw new CustomError(404, 'ShipmentDetails not found');
       }
 
-      const statuses = await ShipmentStatus.findAll({
+      const statuses = await ShippingStage.findAll({
         where: { shipmentDetailsId: shipment.id },
         order: [['dateAndTime', 'ASC']],
       });
@@ -90,23 +90,23 @@ const shipmentStatusController = {
     } catch (error) {
       console.error('Error fetching shipment statuses:', error);
 
-      return res.status(500).json('error in shipmentStatus')
+      return res.status(500).json('error in shippingStage')
     }
   },
 
-  async deleteShipmentStatus(req: Request, res: Response, next: NextFunction):Promise<any> {
-    const { shipmentStatusId } = req.params;
+  async deleteShippingStage(req: Request, res: Response, next: NextFunction):Promise<any> {
+    const { shippingStageId } = req.params;
 
     try {
-      const status = await ShipmentStatus.findByPk(shipmentStatusId);
+      const status = await ShippingStage.findByPk(shippingStageId);
       if (!status) {
-        throw new CustomError(404, 'ShipmentStatus not found');
+        throw new CustomError(404, 'ShippingStage not found');
       }
 
       await status.destroy();
-      res.status(200).json({ message: 'ShipmentStatus deleted successfully' });
+      res.status(200).json({ message: 'ShippingStage deleted successfully' });
     } catch (err) {
-      console.error('Error deleting ShipmentStatus:', err);
+      console.error('Error deleting ShippingStage:', err);
       return res.status(500).json('error deleting shipment status')
     }
   },
@@ -120,7 +120,7 @@ const shipmentStatusController = {
         throw new CustomError(400, 'No receipt file uploaded');
       }
 
-      const status = await ShipmentStatus.findByPk(id);
+      const status = await ShippingStage.findByPk(id);
       if (!status) {
         throw new CustomError(404, 'Status not found');
       }
@@ -140,13 +140,13 @@ const shipmentStatusController = {
 
   async approvePayment(req: Request, res: Response, next: NextFunction):Promise<any> {
   
-      const { shipmentStatusId } = req.params;
+      const { shippingStageId } = req.params;
     const { paymentDate, amountPaid } = req.body;
 
     try {
-      const status = await ShipmentStatus.findByPk(shipmentStatusId);
+      const status = await ShippingStage.findByPk(shippingStageId);
       if (!status) {
-        throw new CustomError(404, 'ShipmentStatus not found');
+        throw new CustomError(404, 'ShippingStage not found');
       }
 
       status.paymentDate = paymentDate;
@@ -163,4 +163,4 @@ const shipmentStatusController = {
 
 }
 
-export default shipmentStatusController;
+export default shippingStageController;

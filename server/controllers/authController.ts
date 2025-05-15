@@ -149,6 +149,11 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       { adminId: admin.id, email: admin.email, name: admin.name },
 
     );
+  res.cookie('authToken', login, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 3600000 // 1 hour
+  });
 
     res.status(200).json({ loginToken });
   } catch (error) {

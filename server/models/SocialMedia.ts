@@ -1,11 +1,11 @@
 
-import { Model, DataTypes } from 'sequelize';
+import { Model, DataTypes, ForeignKey } from 'sequelize';
 import {sequelize} from '../config/database';
 import { Admin } from './Admin';
 
 export class SocialMedia extends Model {
   public id!: number;
-  public adminId!: number;
+  public adminId!: ForeignKey<Admin['id']>;
   public name!: string;
   public url!: string;
 }

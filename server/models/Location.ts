@@ -2,29 +2,30 @@
 import { DataTypes, ForeignKey, Model } from 'sequelize';
 import {sequelize} from '../config/database';
 import { Admin } from './Admin';
+import { ShippingStage } from './ShippingStage';
 
-export interface DocumentTemplateAttributes {
+export interface LocationAttributes {
   id?: number;
-  adminId: ForeignKey<Admin['id']>;
+  stageId: ForeignKey<ShippingStage['id']>;
   name: string;
   filePath: string;
 }
 
-class DocumentTemplate extends Model<DocumentTemplateAttributes> implements DocumentTemplateAttributes {
+class Location extends Model<LocationAttributes> implements LocationAttributes {
   public id?: number;
-  public adminId!: ForeignKey<Admin['id']>;
+  public stageId!: ForeignKey<ShippingStage['id']>;
   public name!: string;
   public filePath!: string;
 }
 
-DocumentTemplate.init(
+Location.init(
   {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
-    adminId: {
+    stageId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -43,9 +44,10 @@ DocumentTemplate.init(
   },
   {
     sequelize,
-    modelName: 'DocumentTemplate',
+    modelName: 'Location',
   }
 );
-Admin.hasMany(DocumentTemplate, { foreignKey: 'adminId' });
-DocumentTemplate.belongsTo(Admin, { foreignKey: 'adminId' });
-export { DocumentTemplate };
+ShippingStage.hasOne(Location, { foreignKey: 'stageId' });
+Location.belongsTo(ShippingStage, { foreignKey: 'stageId' });
+
+export { Location };

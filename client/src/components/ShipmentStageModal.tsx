@@ -1,5 +1,5 @@
 import { routes } from "@/data/constants";
-import { PaymentStatus, ShipmentStatus } from "@/types/shipment.types";
+import { PaymentStatus, ShippingStage } from "@/types/shipment.types";
 import { protectedApi } from "@/utils/apiUtils";
 import React, { useState } from "react";
 
@@ -8,11 +8,11 @@ interface ModalProps {
   shipmentId: number;
 }
 
-export const AddShipmentStatusModal: React.FC<ModalProps> = ({
+export const AddShippingStageModal: React.FC<ModalProps> = ({
   onClose,
   shipmentId,
 }) => {
-  const [formData, setFormData] = useState<Omit<ShipmentStatus,'id'|'paymentDate'|'amountPaid'|'paymentReceipt'>>({
+  const [formData, setFormData] = useState<Omit<ShippingStage,'id'|'paymentDate'|'amountPaid'|'paymentReceipt'>>({
     title: "",
    dateAndTime: new Date().toISOString().split("T")[0],
     feeInDollars: 0,
@@ -41,7 +41,7 @@ export const AddShipmentStatusModal: React.FC<ModalProps> = ({
         paymentStatus: requiresFee ? 'YET_TO_BE_PAID' : "NO_NEED_FOR_PAYMENT",
       };
 
-  await protectedApi.post(routes.shipmentStatus.create(shipmentId),payload)
+  await protectedApi.post(routes.shippingStage.create(shipmentId),payload)
       onClose();
     } catch (error) {
       console.error("Error creating shipment status:", error);
@@ -113,13 +113,13 @@ export const AddShipmentStatusModal: React.FC<ModalProps> = ({
 };
 
 
-interface EditShipmentStatusModalProps {
-  status: ShipmentStatus;
+interface EditShippingStageModalProps {
+  status: ShippingStage;
   onClose: () => void;
 }
 
-export default function EditShipmentStatusModal({ status, onClose }: EditShipmentStatusModalProps) {
-  const [formData, setFormData] = useState<ShipmentStatus>({
+export default function EditShippingStageModal({ status, onClose }: EditShippingStageModalProps) {
+  const [formData, setFormData] = useState<ShippingStage>({
     ...status,
     dateAndTime: status.dateAndTime??new Date().toISOString().split("T")[0],
     paymentDate: status.paymentDate?.substring(0, 10) ?? "",
@@ -145,7 +145,7 @@ export default function EditShipmentStatusModal({ status, onClose }: EditShipmen
 
   const handleSubmit = async () => {
     try {
-     await protectedApi.patch(routes.shipmentStatus.update(status.id),formData)
+     await protectedApi.patch(routes.shippingStage.update(status.id),formData)
 
       window.location.reload();
       onClose();
@@ -224,7 +224,7 @@ interface DeleteStatusModalProps {
   onDeleted: () => void;
 }
 
-export const DeleteShipmentStatusModal: React.FC<DeleteStatusModalProps> = ({
+export const DeleteShippingStageModal: React.FC<DeleteStatusModalProps> = ({
   statusId,
   onDeleted,
 }) => {
@@ -233,7 +233,7 @@ export const DeleteShipmentStatusModal: React.FC<DeleteStatusModalProps> = ({
   const handleDelete = async () => {
     try {
       setDeleting(true);
-      await protectedApi.delete(routes.shipmentStatus.delete(statusId));
+      await protectedApi.delete(routes.shippingStage.delete(statusId));
       alert('Item deleted')
       onDeleted();
 

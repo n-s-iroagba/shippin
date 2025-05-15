@@ -1,14 +1,26 @@
-
-import { Model, DataTypes } from 'sequelize';
-import {sequelize} from '../config/database';
+import { Model, DataTypes, ForeignKey, Optional } from 'sequelize';
+import { sequelize } from '../config/database';
 import { Admin } from './Admin';
 
-export class CryptoWallet extends Model {
+// Define which fields are required when creating a new CryptoWallet
+interface CryptoWalletAttributes {
+  id: number;
+  adminId: ForeignKey<Admin['id']>;
+  currency: string;
+  walletAddress: string;
+}
+
+interface CryptoWalletCreationAttributes extends Optional<CryptoWalletAttributes, 'id'> {}
+
+export class CryptoWallet extends Model<CryptoWalletAttributes, CryptoWalletCreationAttributes> implements CryptoWalletAttributes {
   public id!: number;
-  public adminId!: number;
+  public adminId!: ForeignKey<Admin['id']>;
   public currency!: string;
   public walletAddress!: string;
-  public label?: string;
+
+  // timestamps!
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 }
 
 CryptoWallet.init({
@@ -33,15 +45,14 @@ CryptoWallet.init({
     type: DataTypes.STRING,
     allowNull: false
   },
-  label: {
-    type: DataTypes.STRING,
-    allowNull: true
-  }
 }, {
   sequelize,
   modelName: 'CryptoWallet',
   timestamps: true
 });
 
-CryptoWallet.belongsTo(Admin, { foreignKey: 'adminId' });
+// Setup associations (assuming Admin model is defined accordingly)
 Admin.hasMany(CryptoWallet, { foreignKey: 'adminId' });
+CryptoWallet.belongsTo(Admin, { foreignKey: 'adminId' });
+
+export default CryptoWallet;

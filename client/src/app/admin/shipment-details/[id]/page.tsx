@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { DeleteShipmentModal, EditShipmentModal } from "@/components/ShipmentModals";
-import EditShipmentStatusModal, { AddShipmentStatusModal, DeleteShipmentStatusModal } from "@/components/ShipmentStatusModal";
+
 import { useParams } from "next/navigation";
 
 import Loading from "@/components/Loading";
-import { ShipmentDetails, ShipmentStatus } from "@/types/shipment.types";
+import { ShipmentDetails, ShippingStage } from "@/types/shipment.types";
 import { protectedApi } from "@/utils/apiUtils";
 import { routes } from "@/data/constants";
+import EditShippingStageModal, { AddShippingStageModal, DeleteShippingStageModal } from "@/components/ShipmentStageModal";
 
 
 
@@ -16,11 +17,11 @@ const AdminShipmentDetails = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [shipmentDetails, setShipmentDetails] = useState<ShipmentDetails | null>(null);
-    const [shipmentStatuses, setShipmentStatuses] = useState<ShipmentStatus[]>([]);
-    const [selectedShipmentStatus, setSelectedShipmentStatus] = useState<ShipmentStatus | null>(null);
-    const [showEditShipmentStatusModal, setShowEditShipmentStatusModal] = useState(false);
-    const [showDeleteShipmentStatusModal, setShowDeleteShipmentStatusModal] = useState(false);
-    const [showAddShipmentStatusModal, setShowAddShipmentStatusModal] = useState(false);
+    const [shippingStagees, setShippingStagees] = useState<ShippingStage[]>([]);
+    const [selectedShippingStage, setSelectedShippingStage] = useState<ShippingStage | null>(null);
+    const [showEditShippingStageModal, setShowEditShippingStageModal] = useState(false);
+    const [showDeleteShippingStageModal, setShowDeleteShippingStageModal] = useState(false);
+    const [showAddShippingStageModal, setShowAddShippingStageModal] = useState(false);
     const params = useParams();
     const shipmentId = params.id;
     const [loading, setLoading] = useState(true);
@@ -34,10 +35,10 @@ const AdminShipmentDetails = () => {
                 setLoading(true);
                 setError(null);
 
-                const result = await protectedApi.get<{ shipment: ShipmentDetails, statuses: ShipmentStatus[] }>(routes.shipment.details(shipmentId as string));
+                const result = await protectedApi.get<{ shipment: ShipmentDetails, statuses: ShippingStage[] }>(routes.shipment.details(shipmentId as string));
                 console.log(result);
                 setShipmentDetails(result.shipment)
-                setShipmentStatuses(result.statuses)
+                setShippingStagees(result.statuses)
 
             } catch (error) {
                 setError("An error occurred, try again later");
@@ -121,7 +122,7 @@ const AdminShipmentDetails = () => {
 
                 <div className="flex justify-center">
                     <button
-                        onClick={() => setShowAddShipmentStatusModal(true)}
+                        onClick={() => setShowAddShippingStageModal(true)}
                         className="text-black bg-blue p-1 rounded bg-goldenrod"
                     >
                         Add Shipment Status
@@ -129,7 +130,7 @@ const AdminShipmentDetails = () => {
                 </div>
 
                 <ul>
-                    {shipmentStatuses.map((step: ShipmentStatus) => (
+                    {shippingStagees.map((step: ShippingStage) => (
                         <li key={step.id} className="flex justify-evenly border-b p-1">
                             <div className="flex flex-col w-[60%] justify-between">
                                 <h4 className="text-center font-bold">Status:</h4>
@@ -167,8 +168,8 @@ const AdminShipmentDetails = () => {
                                 <div className="flex justify-center">
                                     <button
                                         onClick={() => {
-                                            setShowEditShipmentStatusModal(true);
-                                            setSelectedShipmentStatus(step);
+                                            setShowEditShippingStageModal(true);
+                                            setSelectedShippingStage(step);
                                         }}
                                         className="bg-yellow-500 w-[10rem] text-white p-1 mx-2"
                                     >
@@ -176,8 +177,8 @@ const AdminShipmentDetails = () => {
                                     </button>
                                     <button
                                         onClick={() => {
-                                            setShowDeleteShipmentStatusModal(true);
-                                            setSelectedShipmentStatus(step);
+                                            setShowDeleteShippingStageModal(true);
+                                            setSelectedShippingStage(step);
                                         }}
                                         className="bg-red-500 text-white p-1"
                                     >
@@ -192,15 +193,15 @@ const AdminShipmentDetails = () => {
                 </ul>
             </div>
 
-            {showAddShipmentStatusModal && <AddShipmentStatusModal onClose={() => setShowAddShipmentStatusModal(false)} shipmentId={shipmentDetails.id} />}
-            {showEditModal && <EditShipmentModal shipment={shipmentDetails} onClose={() => setShowEditModal(false)} onUpdate={() => setShowEditShipmentStatusModal(false)} />}
+            {showAddShippingStageModal && <AddShippingStageModal onClose={() => setShowAddShippingStageModal(false)} shipmentId={shipmentDetails.id} />}
+            {showEditModal && <EditShipmentModal shipment={shipmentDetails} onClose={() => setShowEditModal(false)} onUpdate={() => setShowEditShippingStageModal(false)} />}
             {showDeleteModal && <DeleteShipmentModal shipment={shipmentDetails} onDelete={() => setShowDeleteModal(false)} />}
 
-            {showEditShipmentStatusModal && selectedShipmentStatus && (
-                <EditShipmentStatusModal status={selectedShipmentStatus} onClose={() => setShowEditShipmentStatusModal(false)} />
+            {showEditShippingStageModal && selectedShippingStage && (
+                <EditShippingStageModal status={selectedShippingStage} onClose={() => setShowEditShippingStageModal(false)} />
             )}
-            {showDeleteShipmentStatusModal && selectedShipmentStatus && (
-                <DeleteShipmentStatusModal onDeleted={() => setShowDeleteShipmentStatusModal(false)} statusId={selectedShipmentStatus.id} />
+            {showDeleteShippingStageModal && selectedShippingStage && (
+                <DeleteShippingStageModal onDeleted={() => setShowDeleteShippingStageModal(false)} statusId={selectedShippingStage.id} />
             )}
         </div>
     );

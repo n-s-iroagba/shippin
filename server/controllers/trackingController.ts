@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ShipmentDetails } from '../models/ShipmentDetails';
-import { ShipmentStatus } from '../models/ShipmentStatus';
+import { ShippingStage } from '../models/ShippingStage';
 import { Admin } from '../models/Admin';
 import { CustomError } from '../CustomError';
 import { sendCustomMail} from '../mailService';
@@ -23,32 +23,33 @@ export const trackingController = {
       if (!shipmentDetails) {
         throw new CustomError(404, 'Tracking ID not found');
       }
-      const statuses = await ShipmentStatus.findAll({
+      const stages = await ShippingStage.findAll({
         where: { shipmentDetailsId: shipmentDetails.id },
         order: [['dateAndTime', 'ASC']]
       });
+      console.log(stages)
 
       const admin = await Admin.findByPk(shipmentDetails.adminId);
       
-      if (admin && admin.email) {
-        try {
-          await sendCustomMail(admin.email, {subject:'Shipment Tracked', 
-            senderName: shipmentDetails.senderName,
-            recipientName: shipmentDetails.recipientName,
-            receivingAddress: shipmentDetails.receivingAddress,
-            shipmentID: shipmentDetails.shipmentID,
-            loction: { lat, lng }
+      // if (admin && admin.email) {
+      //   try {
+      //     await sendCustomMail(admin.email, {subject:'Shipment Tracked', 
+      //       senderName: shipmentDetails.senderName,
+      //       recipientName: shipmentDetails.recipientName,
+      //       receivingAddress: shipmentDetails.receivingAddress,
+      //       shipmentID: shipmentDetails.shipmentID,
+      //       loction: { lat, lng }
           
-          });
-        } catch (error) {
-          console.error('Failed to send email:', error);
-        }
-      }
+      //     });
+      //   } catch (error) {
+      //     console.error('Failed to send email:', error);
+      //   }
+      // }
 
 
       res.json({
         shipmentDetails,
-        shipmentStatuses: statuses
+        shippingStages: stages
       });
     } catch (error) {
       console.error('Tracking error:', error);

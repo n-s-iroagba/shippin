@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { connectDB, sequelize } from "./config/database";
 import router from "./router";
 import cors from 'cors'
+
 // import { applyAssociations } from './models';  // the file from step 1
 
 dotenv.config();
@@ -13,12 +14,11 @@ app.use(cors({
   origin: '*',
 }))
 
-
 connectDB();
 
 
 sequelize.sync(
-  // {force:true}
+  {force:true}
 ).then(() => {
   console.log("📦 MySQL Database synchronized!");
 });

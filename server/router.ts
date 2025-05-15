@@ -1,14 +1,14 @@
 import { Router } from "express";
 import { signUp, login, verifyEmail, resendVerificationToken, forgotPassword, resetPassword } from "./controllers/authController";
 import { listTemplates, createTemplate, updateTemplate, deleteTemplate, downloadTemplate } from "./controllers/documentTemplateController";
-import { fiatPlatformController } from "./controllers/fiatPlatformController";
+
 import { shipmentController } from "./controllers/shipmentController";
 import { trackingController } from "./controllers/trackingController";
-import { createWallet, getWalletsByAdmin, getWalletsByCoinName, updateWallet, deleteWallet } from "./controllers/walletController";
+
 import { uploadDocument, uploadPayment, uploadTemplate } from "./middleware/upload";
-import shipmentStatusController from "./controllers/ShipmentStatusController";
+import shippingStageController from "./controllers/ShippingStageController";
 import { socialMediaController } from "./controllers/socialMediaController";
-import { getPaymentInit } from "./controllers/paymentController";
+
 import fs from 'fs';
 
 const uploadReceipt = uploadPayment.single('paymentReceipt');
@@ -27,15 +27,12 @@ router.delete('/admin/shipment-details/:id',  shipmentController.deleteShipment)
 router.get('/track/shipment/:trackingId',  trackingController.trackShipment);
 
 // Shipment status routes
-router.post('/admin/status/:shipmentId', uploadDocument.single('supportingDocument'), shipmentStatusController.createStatus);
-router.patch('/admin/status/:statusId', uploadDocument.single('supportingDocument'), shipmentStatusController.updateStatus);
-router.delete('/admin/status/:statusId',  shipmentStatusController.deleteShipmentStatus);
+router.post('/admin/status/:shipmentId', uploadDocument.single('supportingDocument'), shippingStageController.createStatus);
+router.patch('/admin/status/:statusId', uploadDocument.single('supportingDocument'), shippingStageController.updateStatus);
+router.delete('/admin/status/:statusId',  shippingStageController.deleteShippingStage);
 
-
-router.post( '/statuses/:shipmentStatusId/approve-payment',shipmentStatusController.approvePayment);
-router.post('/statuses/:shipmentStatusId/upload-receipt',uploadReceipt,shipmentStatusController.uploadReceipt);
-
-
+router.post( '/statuses/:shippingStageId/approve-payment',shippingStageController.approvePayment);
+router.post('/statuses/:shippingStageId/upload-receipt',uploadReceipt,shippingStageController.uploadReceipt);
 
 router.post('/admin/signup', signUp);
 router.post('/admin/login', login);
@@ -44,30 +41,10 @@ router.post('/admin/resend-verification-token', resendVerificationToken);
 router.post('/admin/forgot-password', forgotPassword);
 router.post('/admin/reset-password', resetPassword);
 
-
-
-
-
-
-// Create
-router.post('/wallets', createWallet);
-// Read by admin
-router.get('/admins/:adminId/wallets', getWalletsByAdmin);
-// Read by coinName
-router.get('/wallets/coin/:coinName', getWalletsByCoinName);
-// Update
-router.put('/wallets/:id', updateWallet);
-// Delete
-router.delete('/wallets/:id', deleteWallet);
-
 // Tracking routes
 router.get('/api/track/:trackingId', trackingController.trackShipment);
 
-// Fiat Platform routes
-router.get('/api/admin/fiat-platforms',  fiatPlatformController.list);
-router.post('/api/admin/fiat-platforms',  fiatPlatformController.create);
-router.put('/api/admin/fiat-platforms/:id',  fiatPlatformController.update);
-router.delete('/api/admin/fiat-platforms/:id',  fiatPlatformController.delete);
+
 
 // Social Media routes -  Assuming the existence of socialMediaController
 router.get('/api/admin/social-media',  socialMediaController.list);
@@ -75,8 +52,6 @@ router.post('/api/admin/social-media',  socialMediaController.create);
 router.put('/api/admin/social-media/:id',  socialMediaController.update);
 router.delete('/api/admin/social-media/:id',  socialMediaController.remove);
 
-// Payment routes - Assuming the existence of paymentController
-router.get('/api/payment/:statusId',getPaymentInit);
 
 // Document Template routes
 router.get('/api/admin/templates', listTemplates);

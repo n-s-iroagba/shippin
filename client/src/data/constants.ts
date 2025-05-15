@@ -22,12 +22,12 @@ export const routes = {
     trackApi: (trackingId: string) => `/api/track/${trackingId}`,
   },
 
-  shipmentStatus: {
+  shippingStage: {
     create: (shipmentId: number) => `/admin/status/${shipmentId}`,
     update: (statusId: number) => `/admin/status/${statusId}`,
     delete: (statusId: number) => `/admin/status/${statusId}`,
-    approvePayment: (shipmentStatusId: string) => `/statuses/${shipmentStatusId}/approve-payment`,
-    uploadReceipt: (shipmentStatusId: string) => `/statuses/${shipmentStatusId}/upload-receipt`,
+    approvePayment: (shippingStageId: string) => `/statuses/${shippingStageId}/approve-payment`,
+    uploadReceipt: (shippingStageId: string) => `/statuses/${shippingStageId}/upload-receipt`,
   },
 
   wallets: {

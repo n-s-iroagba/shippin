@@ -7,7 +7,7 @@ import { CryptoWalletAttributes } from '@/types/crypto-wallet.types';
 import { FiatPlatformAttributes } from '@/types/fiat-platform.types';
 
 interface PaymentInitData {
-  shipmentStatus: {
+  shippingStage: {
     id: number;
     feeInDollars: number;
     title: string;
@@ -25,7 +25,7 @@ export default function PaymentPage({ params }: { params: { statusId: string } }
   useEffect(() => {
     const fetchPaymentData = async () => {
       try {
-        const data = await ApiService.getPaymentInit(params.statusId);
+        const data = await apiUtils.getPaymentInit(params.statusId);
         setPaymentData(data);
         setError('');
       } catch (err: any) {
@@ -52,8 +52,8 @@ export default function PaymentPage({ params }: { params: { statusId: string } }
 
     try {
       const message = selectedPlatform.messageTemplate
-        .replace('{statusId}', String(paymentData.shipmentStatus.id))
-        .replace('{amount}', String(paymentData.shipmentStatus.feeInDollars));
+        .replace('{statusId}', String(paymentData.shippingStage.id))
+        .replace('{amount}', String(paymentData.shippingStage.feeInDollars));
 
       const redirectUrl = `${selectedPlatform.baseUrl}?text=${encodeURIComponent(message)}`;
       window.location.href = redirectUrl;
@@ -79,15 +79,15 @@ export default function PaymentPage({ params }: { params: { statusId: string } }
         alert('Payment initiated successfully');
         setShowPaymentModal(false);
       }}
-      feeInDollars={paymentData?.shipmentStatus.feeInDollars || 0}
+      feeInDollars={paymentData?.shippingStage.feeInDollars || 0}
       cryptoWallets={paymentData?.cryptoWallets || []}
       fiatPlatforms={paymentData?.fiatPlatforms || []}
     />
 
     <h1 className="text-2xl font-bold mb-4">Payment Required</h1>
     <div className="mb-6">
-      <h2 className="text-xl">{paymentData.shipmentStatus.title}</h2>
-      <p className="text-lg">Amount: ${paymentData.shipmentStatus.feeInDollars}</p>
+      <h2 className="text-xl">{paymentData.shippingStage.title}</h2>
+      <p className="text-lg">Amount: ${paymentData.shippingStage.feeInDollars}</p>
     </div>
 
       <div className="space-y-4">

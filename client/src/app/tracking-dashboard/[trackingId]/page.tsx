@@ -13,16 +13,16 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { SERVER_URL } from "@/data/urls";
 import Loading from "@/components/Loading";
-import { ShipmentDetails, ShipmentStatus } from "@/types/shipment.types";
+import { ShipmentDetails, ShippingStage } from "@/types/shipment.types";
 import DocumentModal from "@/components/DocumentModal";
 
 const ShipmentTrackingDashboard: React.FC = () => {
   const [shipmentDetails, setShipmentDetails] = useState<{
     shipmentDetails: ShipmentDetails;
-    shipmentStatuses: ShipmentStatus[];
+    shippingStages: ShippingStage[];
   } | null>(null);
-  const [uploadModalStatus, setUploadModalStatus] =
-    useState<ShipmentStatus | null>(null);
+  const [uploadModalStat, setUploadModalStat] =
+    useState<ShippingStage | null>(null);
   const [viewShipmentDetails, setViewShipmentDetails] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState('')
   const params = useParams();
@@ -30,13 +30,13 @@ const ShipmentTrackingDashboard: React.FC = () => {
   const long = 35.856737
   const lat = 10.606619
   const handleUploadReceipt = async (file: File) => {
-    if (!uploadModalStatus) return;
+    if (!uploadModalStat) return;
     const formData = new FormData();
     formData.append("receipt", file);
 
     try {
       const response = await fetch(
-        `/api/statuses/${uploadModalStatus.id}/upload-receipt`,
+        `/api/states/${uploadModalStat.id}/upload-receipt`,
         {
           method: "POST",
           body: formData,
@@ -61,7 +61,7 @@ const ShipmentTrackingDashboard: React.FC = () => {
         if (!response.ok) throw new Error("Failed to fetch shipment details");
         const data: {
           shipmentDetails: ShipmentDetails;
-          shipmentStatuses: ShipmentStatus[];
+          shippingStagees: ShippingStage[];
         } = await response.json();
         console.log(data);
         setShipmentDetails(data);
@@ -91,7 +91,7 @@ const ShipmentTrackingDashboard: React.FC = () => {
         </div>
 
         {/* Payment Alert */}
-        {shipmentDetails.shipmentStatuses?.some(
+        {shipmentDetails.shippingStages?.some(
           (s) => s.paymentStatus === "YET_TO_BE_PAID"
         ) && (
             <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-500 p-6 mb-8 rounded-xl shadow-sm">
@@ -185,9 +185,9 @@ const ShipmentTrackingDashboard: React.FC = () => {
             <FontAwesomeIcon icon={faInfoCircle} className="text-indigo-600" />
             Shipment Progress
           </h3>
-          <div className="space-y-8">
-            {(shipmentDetails.shipmentStatuses || []).map((status) => (
-              <div key={status.id} className="flex gap-6 relative">
+          <div className="space-y-8 bg-blue-100 rounded-xl">
+            {(shipmentDetails.shippingStages || []).map((stat) => (
+              <div key={stat.id} className="flex gap-6 relative">
                 <div className="flex-none">
                   <div className="flex flex-col items-center h-full">
                     <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center">
@@ -200,65 +200,65 @@ const ShipmentTrackingDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl pb-6 pt-3 shadow-sm hover:shadow-md transition-shadow">
+                <div className=" rounded-xl pb-6 pt-3 shadow-sm hover:shadow-md transition-shadow">
                   <h4 className="text-lg font-semibold text-gray-900">
-                    {status.title}
+                    {stat.title}
                   </h4>
                   <p className="text-gray-600 mb-0">
-                    Carrier note: {status.carrierNote}
+                    Carrier note: {stat.carrierNote}
                   </p>
 
                   <small className="text-sm text-gray-500">
-                    {new Date(status.dateAndTime).toLocaleString()}
+                    {new Date(stat.dateAndTime).toLocaleString()}
                   </small>
 
-                  {status.feeInDollars && status.feeInDollars > 0 &&(
+                  {stat.feeInDollars && stat.feeInDollars > 0 &&(
                     <div className="mt-2 space-y-2">
                       <div className='text-gray-600'>
                         Fee Required: {' '}
                         <span className="text-lg font-medium text-amber-600">
-                          ${status.feeInDollars}
+                          ${stat.feeInDollars}
                         </span>
                       </div>
                       {<small className="text-small  text-gray-600">
-                        {status.percentageNote}% of shipment value
+                        {stat.percentageNote}% of shipment value
                       </small>
                       }
                      
-                        {status.feeInDollars && (
+                        {stat.feeInDollars && (
                           <>
                             <div className='text-gray-600 mb-2 '>
                               Amount Paid: {' '}
                               <span className="text-lg font-medium text-green-600">
-                                ${status.amountPaid}
+                                ${stat.amountPaid}
                               </span>
                             </div>
                             <small className="text-small  text-gray-600">
-                              Payment Date: {status.amountPaid}
+                              Payment Date: {stat.amountPaid}
                             </small>
                           </>
                         )}
                         <div className="flex flex-col lg:flex-row gap-4">
-                          {status.paymentStatus === "YET_TO_BE_PAID" && (
+                          {stat.paymentStat === "YET_TO_BE_PAID" && (
                             <Link
-                              href={`/payment/${status.id}`}
+                              href={`/payment/${stat.id}`}
                               className="inline-block bg-indigo-600 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
                             >
                               Make Payment
                             </Link>
                           )}
 
-                          {!status.paymentReceipt && (
+                          {!stat.paymentReceipt && (
                             <button
-                              onClick={() => setUploadModalStatus(status)}
+                              onClick={() => setUploadModalStat(stat)}
                               className="inline-block bg-amber-500 text-white px-6 py-2.5 rounded-lg hover:bg-amber-600 transition-colors font-medium"
                             >
                               Upload Receipt
                             </button>
                           )}
 
-                         {status.supportingDocument && <button 
-                          onClick={()=>setSelectedDocument(status.supportingDocument as string)}
+                         {stat.supportingDocument && <button 
+                          onClick={()=>setSelectedDocument(stat.supportingDocument as string)}
                           className="bg-gray-500 text-white px-6 py-2.5 rounded-lg hover:bg-gray-600 transition-colors font-medium flex items-center gap-2">
                             <FontAwesomeIcon icon={faFileAlt} />
                             View Document
@@ -280,7 +280,7 @@ const ShipmentTrackingDashboard: React.FC = () => {
 {selectedDocument && <DocumentModal url={selectedDocument} />
 }
       {/* Upload Receipt Modal */}
-      {uploadModalStatus && (
+      {uploadModalStat && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl p-8 max-w-md w-full">
             <h3 className="text-xl font-semibold mb-6">
@@ -299,7 +299,7 @@ const ShipmentTrackingDashboard: React.FC = () => {
             </div>
             <div className="flex justify-end">
               <button
-                onClick={() => setUploadModalStatus(null)}
+                onClick={() => setUploadModalStat(null)}
                 className="px-6 py-2.5 text-gray-600 hover:text-gray-800 font-medium"
               >
                 Cancel

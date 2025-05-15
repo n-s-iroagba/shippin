@@ -3,42 +3,20 @@ import{ Request, Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { Admin } from '../models/Admin';
 import { CustomError } from '../CustomError';
+const SECRET_KEY =''
+const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  const token = req.cookies.authToken;
 
-export const authMiddleware = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+  if (!token) {
+    return next(new CustomError( 401, ''));
+  }
+
   try {
-    const token = req.headers.authorization?.split(' ')[1];
-
-    if (!token) {
-      res.status(401).json({ message: 'No token provided' });
-      return;
-    }
-
-    const secret = process.env.JWT_SECRET || 'default_secret';
-    const decoded = jwt.verify(token, secret);
-
-    if (typeof decoded !== 'object' || !('id' in decoded)) {
-      res.status(401).json({ message: 'Invalid token payload' });
-      return;
-    }
-
-    const adminId = (decoded as JwtPayload).id;
-    const admin = await Admin.findByPk(adminId);
-
-    if (!admin) {
-      throw new CustomError( 401, 'Admin not found');
-    }
-
-    if (admin.loginToken !== token) {
-      throw new CustomError( 401,'Admin not found',);
-    }
-
+    const decoded = jwt.verify(token, SECRET_KEY) as JwtPayload & Admin;
+    req.user = decoded
     next();
-  } catch (error) {
-    const message = error instanceof CustomError ? error.message : 'Invalid token';
-    res.status(401).json({ message });
+  } catch (err) {
+       return next(new CustomError( 401, ''));
   }
 };
+export default authMiddleware

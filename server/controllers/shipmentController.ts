@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { CustomError } from '../CustomError';
 import { ShipmentDetails } from '../models/ShipmentDetails';
-import { ShipmentStatus } from '../models/ShipmentStatus';
+import { ShippingStage } from '../models/ShippingStage';
 import logger from '../utils/logger';
 
 export const shipmentController = {
@@ -49,7 +49,7 @@ export const shipmentController = {
         throw new CustomError(404, 'Shipment not found');
       }
       console.log(shipment)
-      const statuses = await ShipmentStatus.findAll({where:{
+      const statuses = await ShippingStage.findAll({where:{
         shipmentDetailsId:shipment.id
       }})
 
@@ -98,7 +98,7 @@ export const shipmentController = {
         throw new CustomError(404, 'Shipment not found');
       }
 
-      await ShipmentStatus.destroy({
+      await ShippingStage.destroy({
         where: { shipmentDetailsId: id }
       });
 

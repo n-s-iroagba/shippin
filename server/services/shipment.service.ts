@@ -30,7 +30,7 @@ export class ShipmentService {
   async getShipmentDetails(id: string, adminId: number) {
     const shipment = await ShipmentDetails.findOne({
       where: { id, adminId },
-      include: ['shipmentStatus']
+      include: ['shippingStage']
     });
 
     if (!shipment) {

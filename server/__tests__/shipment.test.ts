@@ -3,7 +3,7 @@ import request from 'supertest';
 import { app } from '../index';
 import { Admin } from '../models/Admin';
 import { ShipmentDetails } from '../models/ShipmentDetails';
-import { ShipmentStatus } from '../models/ShipmentStatus';
+import { ShippingStage } from '../models/ShippingStage';
 import jwt from 'jsonwebtoken';
 
 describe('Shipment Management Endpoints', () => {
@@ -42,7 +42,7 @@ describe('Shipment Management Endpoints', () => {
   });
 
   beforeEach(async () => {
-    await ShipmentStatus.destroy({ where: {} });
+    await ShippingStage.destroy({ where: {} });
     await ShipmentDetails.destroy({ where: {} });
     
     testShipment = await ShipmentDetails.create({
@@ -52,7 +52,7 @@ describe('Shipment Management Endpoints', () => {
   });
 
   afterAll(async () => {
-    await ShipmentStatus.destroy({ where: {} });
+    await ShippingStage.destroy({ where: {} });
     await ShipmentDetails.destroy({ where: {} });
     await Admin.destroy({ where: {} });
   });
@@ -103,7 +103,7 @@ describe('Shipment Management Endpoints', () => {
         .expect(200);
 
       expect(response.body).toHaveProperty('shipmentDetails');
-      expect(response.body).toHaveProperty('shipmentStatuses');
+      expect(response.body).toHaveProperty('shippingStagees');
     });
 
     it('should return 404 for non-existent shipment', async () => {
@@ -150,7 +150,7 @@ describe('Shipment Management Endpoints', () => {
     let testStatus: any;
 
     beforeEach(async () => {
-      testStatus = await ShipmentStatus.create({
+      testStatus = await ShippingStage.create({
         shipmentDetailsId: testShipment.id,
         location: 'Test Location',
         status: 'In Progress',
@@ -197,7 +197,7 @@ describe('Shipment Management Endpoints', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
-      const deletedStatus = await ShipmentStatus.findByPk(testStatus.id);
+      const deletedStatus = await ShippingStage.findByPk(testStatus.id);
       expect(deletedStatus).toBeNull();
     });
   });
