@@ -6,13 +6,15 @@ import logger from '../utils/logger';
 
 const shippingStageController = {
   async createStatus(req: Request, res: Response, next: NextFunction):Promise<any> {
+    console.log('path',req.file?.path)
     console.log('about creating shipment status')
     try {
       const { shipmentId } = req.params; 
       console.log(Number(shipmentId))
       const file = (req as any).file;
       const data = { ...req.body };
-
+      console.log('file path',file.path)
+      
       if (file) {
         data.supportingDocument = file.path;
       }

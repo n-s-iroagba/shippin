@@ -8,14 +8,17 @@ export interface LocationAttributes {
   id?: number;
   stageId: ForeignKey<ShippingStage['id']>;
   name: string;
-  filePath: string;
+  longitude: number;
+  latitude : number;
 }
 
 class Location extends Model<LocationAttributes> implements LocationAttributes {
   public id?: number;
   public stageId!: ForeignKey<ShippingStage['id']>;
   public name!: string;
-  public filePath!: string;
+  public longitude!: number;
+  public latitude! : number;
+
 }
 
 Location.init(
@@ -37,8 +40,12 @@ Location.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    filePath: {
-      type: DataTypes.STRING,
+    longitude: {
+      type: DataTypes.DOUBLE,
+      allowNull: false,
+    },
+      latitude: {
+      type: DataTypes.DOUBLE,
       allowNull: false,
     },
   },

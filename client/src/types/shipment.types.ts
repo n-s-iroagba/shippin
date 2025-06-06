@@ -15,7 +15,21 @@ export interface ShippingStage {
   amountPaid: number;
   paymentReceipt: string|null;
   paymentDate: string | null;
-  supportingDocument?: string | File  ;
+  supportingDocument: string | null | File  ;
+}
+
+export interface ShippingStageCreationDto {
+ 
+  title: string;
+  dateAndTime: string;
+  carrierNote: string;
+  paymentStatus: PaymentStatus;
+  percentageNote?: number | null;
+  feeInDollars: number | null;
+  amountPaid: number;
+  paymentReceipt: string|null;
+  paymentDate: string | null;
+  supportingDocument:  File | null  ;
 }
 
 export interface ShipmentDetails {

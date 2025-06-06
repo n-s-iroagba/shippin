@@ -20,7 +20,7 @@ const router = Router();
 router.post('/admin/shipment-details/:adminId',  shipmentController.createShipment);
 router.get('/admin/shipment/:adminId',  shipmentController.listShipments);
 router.get('/admin/shipmentdetails/:id',  shipmentController.getShipmentDetails);
-router.put('/admin/shipment-details/:id',  shipmentController.updateShipment);
+router.patch('/admin/shipment-details/:id',  shipmentController.updateShipment);
 router.delete('/admin/shipment-details/:id',  shipmentController.deleteShipment);
 
 //track Shipment

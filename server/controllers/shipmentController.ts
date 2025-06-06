@@ -10,9 +10,10 @@ export const shipmentController = {
       console.log(req.body)
     try {
       const  id = String( Math.random()*1000000000) + 'WPCFJJ'
-
+      const path = req.file?.path
+      console.log('path',path)
       const adminId = req.params.adminId;
-      const shipmentData = { ...req.body, adminId,shipmentID:id };
+      const shipmentData = { ...req.body,adminId,shipmentID:id };
 
       const shipment = await ShipmentDetails.create(shipmentData);
       res.status(201).json(shipment);
@@ -43,18 +44,17 @@ export const shipmentController = {
     try {
       const { id } = req.params;
 
-        const shipment = await ShipmentDetails.findByPk(id);
+        const shipment = await ShipmentDetails.findByPk(id,{
+          include:[ShippingStage]
+        });
 
       if (!shipment) {
         throw new CustomError(404, 'Shipment not found');
       }
-      console.log(shipment)
-      const statuses = await ShippingStage.findAll({where:{
-        shipmentDetailsId:shipment.id
-      }})
+   
 
 
-      res.json({shipment,statuses});
+      res.json({shipment});
     } catch (error) {
       logger.error('Error in shipment controller:', { error, operation: 'getShipmentDetails' });
       res.status(500).json('error occured in shipment controller')

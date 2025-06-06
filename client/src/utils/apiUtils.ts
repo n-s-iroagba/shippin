@@ -124,7 +124,7 @@ const getAuthHeaders = () => {
 export const protectedApi = {
   get: async <T>(endpoint: string): Promise<T> => {
     try {
-      const response = await fetch(`${SERVER_URL}${endpoint}`, {
+      const response = await fetch(endpoint, {
         headers: getAuthHeaders(),
       });
       return await response.json();
@@ -136,9 +136,9 @@ export const protectedApi = {
   },
 
   post: async <U, T>(endpoint: string, data: U): Promise<T> => {
-    console.log(`${SERVER_URL}${endpoint}`)
+    console.log(endpoint)
     try {
-      const response = await fetch(`${SERVER_URL}${endpoint}`, {
+      const response = await fetch(endpoint, {
 
         method: 'POST',
         headers: getAuthHeaders(),
@@ -154,7 +154,7 @@ export const protectedApi = {
 
   patch: async <U, T>(endpoint: string, data: U): Promise<ApiResponse<T>> => {
     try {
-      const response = await fetch(`${SERVER_URL}${endpoint}`, {
+      const response = await fetch(endpoint, {
         method: 'PATCH',
         headers: getAuthHeaders(),
         body: JSON.stringify(data),
@@ -169,7 +169,7 @@ export const protectedApi = {
 
   delete: async <T>(endpoint: string): Promise<ApiResponse<T>> => {
     try {
-      const response = await fetch(`${SERVER_URL}${endpoint}`, {
+      const response = await fetch(endpoint, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
@@ -185,7 +185,7 @@ export const protectedApi = {
 export const ApiUtis = {
   get: async <T>(endpoint: string): Promise<T> => {
     try {
-      const response = await fetch(`${SERVER_URL}${endpoint}`, {
+      const response = await fetch(endpoint, {
          headers: { 'Content-Type': 'application/json' },
       });
       return await response.json();
@@ -197,9 +197,9 @@ export const ApiUtis = {
   },
 
   post: async <U, T>(endpoint: string, data: U): Promise<T> => {
-    console.log(`${SERVER_URL}${endpoint}`)
+    console.log(endpoint)
     try {
-      const response = await fetch(`${SERVER_URL}${endpoint}`, {
+      const response = await fetch(endpoint, {
 
         method: 'POST',
          headers: { 'Content-Type': 'application/json' },
@@ -215,7 +215,7 @@ export const ApiUtis = {
 
   patch: async <U, T>(endpoint: string, data: U): Promise<ApiResponse<T>> => {
     try {
-      const response = await fetch(`${SERVER_URL}${endpoint}`, {
+      const response = await fetch(endpoint, {
         method: 'PATCH',
          headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -230,7 +230,7 @@ export const ApiUtis = {
 
   delete: async <T>(endpoint: string): Promise<ApiResponse<T>> => {
     try {
-      const response = await fetch(`${SERVER_URL}${endpoint}`, {
+      const response = await fetch(endpoint, {
         method: 'DELETE',
          headers: { 'Content-Type': 'application/json' },
       });

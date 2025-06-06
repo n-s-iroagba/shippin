@@ -9,7 +9,7 @@ import Loading from "@/components/Loading";
 import { ShipmentDetails, ShippingStage } from "@/types/shipment.types";
 import { protectedApi } from "@/utils/apiUtils";
 import { routes } from "@/data/constants";
-import EditShippingStageModal, { AddShippingStageModal, DeleteShippingStageModal } from "@/components/ShipmentStageModal";
+import  { AddShippingStageModal, DeleteShippingStageModal, EditShippingStageModal } from "@/components/ShipmentStageModal";
 
 
 
@@ -17,7 +17,6 @@ const AdminShipmentDetails = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [shipmentDetails, setShipmentDetails] = useState<ShipmentDetails | null>(null);
-    const [shippingStagees, setShippingStagees] = useState<ShippingStage[]>([]);
     const [selectedShippingStage, setSelectedShippingStage] = useState<ShippingStage | null>(null);
     const [showEditShippingStageModal, setShowEditShippingStageModal] = useState(false);
     const [showDeleteShippingStageModal, setShowDeleteShippingStageModal] = useState(false);
@@ -34,11 +33,12 @@ const AdminShipmentDetails = () => {
             try {
                 setLoading(true);
                 setError(null);
+                console.log('url',routes.shipment.details(shipmentId as string))
 
                 const result = await protectedApi.get<{ shipment: ShipmentDetails, statuses: ShippingStage[] }>(routes.shipment.details(shipmentId as string));
-                console.log(result);
+                console.log(result)
                 setShipmentDetails(result.shipment)
-                setShippingStagees(result.statuses)
+                
 
             } catch (error) {
                 setError("An error occurred, try again later");
@@ -130,7 +130,7 @@ const AdminShipmentDetails = () => {
                 </div>
 
                 <ul>
-                    {shippingStagees.map((step: ShippingStage) => (
+                    {shipmentDetails.ShippingStages.map((step: ShippingStage) => (
                         <li key={step.id} className="flex justify-evenly border-b p-1">
                             <div className="flex flex-col w-[60%] justify-between">
                                 <h4 className="text-center font-bold">Status:</h4>
@@ -198,7 +198,7 @@ const AdminShipmentDetails = () => {
             {showDeleteModal && <DeleteShipmentModal shipment={shipmentDetails} onDelete={() => setShowDeleteModal(false)} />}
 
             {showEditShippingStageModal && selectedShippingStage && (
-                <EditShippingStageModal status={selectedShippingStage} onClose={() => setShowEditShippingStageModal(false)} />
+                <EditShippingStageModal isOpen={showEditShippingStageModal} initialData={selectedShippingStage} onClose={() => setShowEditShippingStageModal(false)} />
             )}
             {showDeleteShippingStageModal && selectedShippingStage && (
                 <DeleteShippingStageModal onDeleted={() => setShowDeleteShippingStageModal(false)} statusId={selectedShippingStage.id} />

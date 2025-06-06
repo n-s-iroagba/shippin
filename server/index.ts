@@ -10,15 +10,27 @@ dotenv.config();
 // sss
 export const app = express();
 app.use(express.json());
-app.use(cors({
-  origin: '*',
-}))
+
+  app.use(cors({
+    origin: "*", // or your frontend origin
+    credentials: true
+  }))
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static('./uploads'));
+
+
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
 
 connectDB();
 
 
 sequelize.sync(
-  {force:true}
+  // {force:true}
 ).then(() => {
   console.log("📦 MySQL Database synchronized!");
 });

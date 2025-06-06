@@ -61,7 +61,7 @@ const ShipmentTrackingDashboard: React.FC = () => {
         if (!response.ok) throw new Error("Failed to fetch shipment details");
         const data: {
           shipmentDetails: ShipmentDetails;
-          shippingStagees: ShippingStage[];
+          shippingStages: ShippingStage[];
         } = await response.json();
         console.log(data);
         setShipmentDetails(data);
@@ -239,7 +239,7 @@ const ShipmentTrackingDashboard: React.FC = () => {
                           </>
                         )}
                         <div className="flex flex-col lg:flex-row gap-4">
-                          {stat.paymentStat === "YET_TO_BE_PAID" && (
+                          {stat.paymentStatus === "YET_TO_BE_PAID" && (
                             <Link
                               href={`/payment/${stat.id}`}
                               className="inline-block bg-indigo-600 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
