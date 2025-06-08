@@ -1,51 +1,73 @@
+export interface ShipmentDetails {
+  id: number
+  shipmentID: string
+  adminId: number
+  senderName: string
+  sendingPickupPoint: string
+  shippingTakeoffAddress: string
+  receivingAddress: string
+  recipientName: string
+  receipientEmail: string
+  shipmentDescription: string
+  expectedTimeOfArrival: Date
+  freightType: "AIR" | "SEA" | "LAND"
+  weight: number
+  dimensionInInches: string
+  createdAt: Date
+  updatedAt: Date
+  ShippingStages: ShippingStage[]
+}
 
-
-export type FreightType = 'AIR' | 'SEA' | 'LAND';
-
-export type PaymentStatus = 'YET_TO_BE_PAID' | 'PENDING' | 'PAID' | 'NO_NEED_FOR_PAYMENT';
+export interface CreateShipmentDto {
+  senderName: string
+  sendingPickupPoint: string
+  shippingTakeoffAddress: string
+  receivingAddress: string
+  recipientName: string
+  receipientEmail: string
+  shipmentDescription: string
+  expectedTimeOfArrival: Date
+  freightType: "AIR" | "SEA" | "LAND"
+  weight: number
+  dimensionInInches: string
+}
 
 export interface ShippingStage {
-  id: number;
-  title: string;
-  dateAndTime: string;
-  carrierNote: string;
-  paymentStatus: PaymentStatus;
-  percentageNote?: number | null;
-  feeInDollars: number | null;
-  amountPaid: number;
-  paymentReceipt: string|null;
-  paymentDate: string | null;
-  supportingDocument: string | null | File  ;
+  id: string
+  title: string
+  location: string
+  carrierNote: string
+  dateAndTime: Date
+  percentageNote?: string
+  feeInDollars?: number 
+  paymentStatus: 'NO_PAYMENT_REQUIRED'|"UNPAID" | "PENDING" | "PAID"
+  amountPaid?: number
+  paymentDate?: Date
+  supportingDocument?: File | null |Buffer
+  paymentReceipt?:  File | null |Buffer
+  shipmentDetailsId: number
+     longitude: number
+  latitude: number
+  createdAt: Date
+  updatedAt: Date
 }
 
-export interface ShippingStageCreationDto {
- 
-  title: string;
-  dateAndTime: string;
-  carrierNote: string;
-  paymentStatus: PaymentStatus;
-  percentageNote?: number | null;
-  feeInDollars: number | null;
-  amountPaid: number;
-  paymentReceipt: string|null;
-  paymentDate: string | null;
-  supportingDocument:  File | null  ;
+export interface CreateShippingStage {
+
+  title: string
+  location: string
+  carrierNote: string
+  dateAndTime: Date
+   percentageNote?: string
+  feeInDollars?: number
+  paymentStatus: 'NO_PAYMENT_REQUIRED'|"UNPAID" | "PENDING" | "PAID"
+  amountPaid?: number
+  paymentDate?: Date
+  supportingDocument?: File | null
+  paymentReceipt?:  File | null
+   longitude: number
+  latitude: number
+
 }
 
-export interface ShipmentDetails {
-  id: number;
-  shipmentID: string;
-  senderName: string;
-  sendingPickupPoint: string;
-  shippingTakeoffAddress: string;
-  receivingAddress: string;
-  recipientName: string;
-  shipmentDescription: string;
-  expectedTimeOfArrival: Date;
-  freightType: FreightType;
-  weight: number;
-  dimensionInInches: string;
-  receipientEmail: string;
-  adminId?: number;
-  shippingStagees?: ShippingStage[];
-}
+

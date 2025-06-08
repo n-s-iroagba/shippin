@@ -1,152 +1,176 @@
+// components/CryptoWalletForm.tsx
+'use client';
+import React, { useState, useEffect } from 'react';
 
-import React, { useState } from 'react';
-import { ApiService } from '@/services/api.service';
-import { CreateCryptoWalletDto, CryptoWalletAttributes } from '@/types/crypto-wallet.types';
+import { XMarkIcon, WalletIcon } from '@heroicons/react/24/outline';
+import { CryptoWallet } from '@/types/crypto-wallet.types';
+import { protectedApi } from '@/utils/apiUtils';
 
 interface CryptoWalletFormProps {
-  wallet?: CryptoWalletAttributes;
-  onSuccess: () => void;
+  existingWallet?: CryptoWallet;
+  patch?: boolean;
   onClose: () => void;
 }
 
-export default function CryptoWalletForm({ wallet, onSuccess, onClose }: CryptoWalletFormProps) {
-  const [formData, setFormData] = useState<CreateCryptoWalletDto>({
-    currency: wallet?.currency || '',
-    walletAddress: wallet?.walletAddress || '',
-    label: wallet?.label || ''
+const CryptoWalletForm: React.FC<CryptoWalletFormProps> = ({
+  existingWallet,
+  patch = false,
+  onClose,
+}) => {
+  const [formData, setFormData] = useState({
+    currency: '',
+    walletAddress: '',
+    label: '',
   });
-  const [errors, setErrors] = useState<Partial<Record<keyof CreateCryptoWalletDto, string>>>({});
-  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const validateForm = () => {
-    const newErrors: Partial<Record<keyof CreateCryptoWalletDto | '_global', string>> = {};
-    if (!formData.currency?.trim()) newErrors.currency = 'Currency is required';
-    if (!formData.walletAddress?.trim()) newErrors.walletAddress = 'Wallet address is required';
-    if (formData.walletAddress?.trim().length < 10) {
-      newErrors.walletAddress = 'Wallet address must be at least 10 characters';
+  const currencyOptions = [
+    { value: 'bitcoin', label: 'Bitcoin (BTC)', symbol: '₿' },
+    { value: 'ethereum', label: 'Ethereum (ETH)', symbol: 'Ξ' },
+    { value: 'litecoin', label: 'Litecoin (LTC)', symbol: 'Ł' },
+    { value: 'usdt', label: 'Tether (USDT)', symbol: '₮' },
+    { value: 'bnb', label: 'Binance Coin (BNB)', symbol: 'BNB' },
+    { value: 'cardano', label: 'Cardano (ADA)', symbol: 'ADA' },
+    { value: 'solana', label: 'Solana (SOL)', symbol: 'SOL' },
+    { value: 'dogecoin', label: 'Dogecoin (DOGE)', symbol: 'Ð' },
+  ];
+
+  useEffect(() => {
+    if (existingWallet) {
+      setFormData({
+        currency: existingWallet.currency,
+        walletAddress: existingWallet.walletAddress,
+        label: existingWallet.label || '',
+      });
     }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  }, [existingWallet]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    setLoading(true);
+    setError('');
 
-    setSubmitting(true);
     try {
-      if (wallet) {
-        await ApiService.updateCryptoWallet(wallet.id, formData);
-      } else {
-        await ApiService.createCryptoWallet(formData);
+      const adminId = localStorage.getItem('admin_id');
+      if (!adminId) {
+        throw new Error('Admin ID not found');
       }
-      onSuccess();
-    } catch (err: any) {
-      if (err.status === 400 && err.data?.errors) {
-        setErrors(err.data.errors);
-      } else if (err.status === 403) {
-        setErrors({
-          _global: 'You do not have permission to edit this wallet.'
-        });
-      } else if (err.status === 404) {
-        setErrors({
-          _global: 'Crypto wallet not found.'
-        });
+
+      const walletData = {
+        ...formData,
+        label: formData.label || undefined,
+      };
+
+      if (patch && existingWallet) {
+        await protectedApi.patch(`/admin/crypto-wallets/${existingWallet.id}`, walletData);
       } else {
-        setErrors({
-          _global: `Could not ${wallet ? 'update' : 'create'} crypto wallet. Please try again later.`
-        });
+        await protectedApi.post(`/admin/crypto-wallets/${adminId}`, walletData);
       }
+
+      onClose();
+      // Refresh the page to show updated data
+      window.location.reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save wallet');
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4" data-testid="crypto-wallet-form">
-      {errors._global && (
-        <div className="text-red-500 text-sm p-2 bg-red-50 rounded" data-testid="global-error">
-          {errors._global}
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="bg-blue-100 p-2 rounded-full">
+                <WalletIcon className="w-6 h-6 text-blue-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {patch ? 'Edit' : 'Add'} Crypto Wallet
+              </h2>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <XMarkIcon className="w-6 h-6 text-gray-400" />
+            </button>
+          </div>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600 text-sm">{error}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="currency" className="block text-sm font-medium text-gray-700 mb-1">
+                Currency *
+              </label>
+              <select
+                id="currency"
+                name="currency"
+                value={formData.currency}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Select a currency</option>
+                {currencyOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.symbol} {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="walletAddress" className="block text-sm font-medium text-gray-700 mb-1">
+                Wallet Address *
+              </label>
+              <textarea
+                id="walletAddress"
+                name="walletAddress"
+                value={formData.walletAddress}
+                onChange={handleChange}
+                required
+                rows={3}
+                placeholder="Enter the wallet address"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+              />
+            </div>
+
+       
+
+            <div className="flex space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {loading ? 'Saving...' : (patch ? 'Update' : 'Add')} Wallet
+              </button>
+            </div>
+          </form>
         </div>
-      )}
-      <div>
-        <label className="block mb-2" htmlFor="wallet-currency">Currency</label>
-        <input
-          id="wallet-currency"
-          type="text"
-          value={formData.currency}
-          onChange={e => setFormData({ ...formData, currency: e.target.value })}
-          className="w-full p-2 border rounded"
-          disabled={submitting}
-          data-testid="wallet-currency-input"
-        />
-        {errors.currency && (
-          <p className="text-red-500 text-sm mt-1" data-testid="currency-error">
-            {errors.currency}
-          </p>
-        )}
       </div>
-      <div>
-        <label className="block mb-2" htmlFor="wallet-address">Wallet Address</label>
-        <div className="flex">
-          <input
-            id="wallet-address"
-            type="text"
-            value={formData.walletAddress}
-            onChange={e => setFormData({ ...formData, walletAddress: e.target.value })}
-            className="flex-1 p-2 border rounded-l"
-            disabled={submitting}
-            data-testid="wallet-address-input"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              navigator.clipboard.writeText(formData.walletAddress);
-              alert('Address copied to clipboard!');
-            }}
-            className="px-4 py-2 bg-gray-100 border border-l-0 rounded-r hover:bg-gray-200"
-            data-testid="copy-address-button"
-          >
-            Copy
-          </button>
-        </div>
-        {errors.walletAddress && (
-          <p className="text-red-500 text-sm mt-1" data-testid="address-error">
-            {errors.walletAddress}
-          </p>
-        )}
-      </div>
-      <div>
-        <label className="block mb-2" htmlFor="wallet-label">Label (Optional)</label>
-        <input
-          id="wallet-label"
-          type="text"
-          value={formData.label || ''}
-          onChange={e => setFormData({ ...formData, label: e.target.value })}
-          className="w-full p-2 border rounded"
-          disabled={submitting}
-          data-testid="wallet-label-input"
-        />
-      </div>
-      <div className="flex justify-end space-x-2">
-        <button
-          type="button"
-          onClick={onClose}
-          className="px-4 py-2 border rounded"
-          disabled={submitting}
-          data-testid="cancel-button"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="px-4 py-2 bg-primary-blue text-white rounded"
-          disabled={submitting}
-          data-testid="submit-button"
-        >
-          {submitting ? 'Saving...' : wallet ? 'Update' : 'Create'}
-        </button>
-      </div>
-    </form>
+    </div>
   );
-}
+};
+
+export default CryptoWalletForm;

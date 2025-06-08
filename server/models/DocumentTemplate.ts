@@ -1,4 +1,3 @@
-
 import { DataTypes, ForeignKey, Model } from 'sequelize';
 import {sequelize} from '../config/database';
 import { Admin } from './Admin';

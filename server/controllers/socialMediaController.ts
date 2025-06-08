@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { SocialMedia } from '../models/SocialMedia';
-import { CustomError } from '../CustomError';
+import { handleError } from '../middleware/handleError';
+
 
 const list = async (req: Request, res: Response) => {
   try {
@@ -9,8 +10,9 @@ const list = async (req: Request, res: Response) => {
     res.status(200).json(socialMediaLinks);
   } catch (error) {
     console.error('Failed to fetch social media links:', error);
-    throw new CustomError(500, 'Failed to fetch social media links');
+    handleError
   }
+
 };
 
 const create = async (req: Request, res: Response) => {
@@ -19,7 +21,7 @@ const create = async (req: Request, res: Response) => {
     const { name, url } = req.body;
 
     if (!name || !url) {
-      throw new CustomError(400, 'Name and URL are required');
+      throw new AppError(400, 'Name and URL are required');
     }
 
     const socialMedia = await SocialMedia.create({
@@ -30,9 +32,9 @@ const create = async (req: Request, res: Response) => {
 
     res.status(201).json(socialMedia);
   } catch (error) {
-    if (error instanceof CustomError) throw error;
+    if (error instanceof AppError) throw error;
     console.error('Failed to create social media link:', error);
-    throw new CustomError(500, 'Failed to create social media link');
+    throw new AppError(500, 'Failed to create social media link');
   }
 };
 
@@ -44,15 +46,15 @@ const update = async (req: Request, res: Response) => {
 
     const socialMedia = await SocialMedia.findByPk(id);
     if (!socialMedia) {
-      throw new CustomError(404, 'Social media link not found');
+      throw new AppError(404, 'Social media link not found');
     }
 
     await socialMedia.update({ name, url });
     res.status(200).json(socialMedia);
   } catch (error) {
-    if (error instanceof CustomError) throw error;
+    if (error instanceof AppError) throw error;
     console.error('Failed to update social media link:', error);
-    throw new CustomError(500, 'Failed to update social media link');
+    throw new AppError(500, 'Failed to update social media link');
   }
 };
 
@@ -62,15 +64,15 @@ const remove = async (req: Request, res: Response) => {
 
     const socialMedia = await SocialMedia.findByPk(id);
     if (!socialMedia) {
-      throw new CustomError(404, 'Social media link not found');
+      throw new AppError(404, 'Social media link not found');
     }
 
     await socialMedia.destroy();
     res.status(200).json({ message: 'Social media link deleted successfully' });
   } catch (error) {
-    if (error instanceof CustomError) throw error;
+    if (error instanceof AppError) throw error;
     console.error('Failed to delete social media link:', error);
-    throw new CustomError(500, 'Failed to delete social media link');
+    throw new AppError(500, 'Failed to delete social media link');
   }
 };
 

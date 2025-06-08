@@ -29,6 +29,3 @@ Admin.init(
   },
   { sequelize, modelName: "Admin" }
 );
-
-
-

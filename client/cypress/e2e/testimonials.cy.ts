@@ -1,4 +1,3 @@
-
 describe('Testimonial Carousel', () => {
   beforeEach(() => {
     cy.visit('/');

@@ -1,128 +1,105 @@
-
-'use client';
-
-import { useState, useEffect } from 'react';
-import { ApiService } from '@/services/api.service';
+'use client'
+import { useState } from 'react';
 import { DocumentTemplateAttributes } from '@/types/document-template.types';
 import DocumentTemplateForm from '@/components/DocumentTemplateForm';
-import Loading from '@/components/Loading';
+import AdminOffCanvas from '@/components/AdminOffCanvas';
+import { useGetList } from '@/hooks/useFetch';
+import AdminDocumentTemplateCard from '@/components/AdminDocumentTemplateCard';
+import { DeleteConfirmationModal } from '@/components/DeleteConfirmationModal';
+import { Spinner } from '@/components/Spinner';
+import ErrorComponent from '@/components/ErrorComponent';
+import { DocumentTextIcon } from '@heroicons/react/24/outline';
 
-export default function DocumentTemplatesPage() {
-  const [templates, setTemplates] = useState<DocumentTemplateAttributes[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [showForm, setShowForm] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplateAttributes | null>(null);
+export default function DocumentTemplateCrudPage() {
+  const { data: templates, loading, error } = useGetList<DocumentTemplateAttributes>('document-templates');
+  const [createTemplate, setCreateTemplate] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState<DocumentTemplateAttributes | null>(null);
+  const [templateToUpdate, setTemplateToUpdate] = useState<DocumentTemplateAttributes | null>(null);
 
-  const fetchTemplates = async () => {
-    try {
-      const data = await ApiService.listDocumentTemplates();
-      setTemplates(data);
-      setError('');
-    } catch (err: any) {
-      setError('Unable to load document templates. Please try again later.');
-      console.error('Failed to fetch templates:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (loading) {
+    return (
+      <AdminOffCanvas>
+        <div className="flex justify-center py-12">
+          <Spinner className="w-10 h-10 text-blue-600" />
+        </div>
+      </AdminOffCanvas>
+    );
+  }
 
-  useEffect(() => {
-    fetchTemplates();
-  }, []);
-
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this template?')) return;
-
-    try {
-      await ApiService.deleteDocumentTemplate(id);
-      await fetchTemplates();
-    } catch (err: any) {
-      setError('Could not delete document template. Please try again later.');
-    }
-  };
-
-  const handleDownload = async (id: number) => {
-    try {
-      window.location.href = `/api/admin/templates/${id}/download`;
-    } catch (err: any) {
-      setError('Could not download document template. Please try again later.');
-    }
-  };
-
-  if (loading) return <Loading />;
+  if (error) {
+    return (
+      <AdminOffCanvas>
+        <ErrorComponent message={error || "Failed to load document templates"} />
+      </AdminOffCanvas>
+    );
+  }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Document Templates</h1>
-        <button
-          onClick={() => {
-            setSelectedTemplate(null);
-            setShowForm(true);
-          }}
-          className="bg-primary-blue text-white px-4 py-2 rounded"
-        >
-          Create Template
-        </button>
-      </div>
+    <>
+      <AdminOffCanvas>
+        <div className="container mx-auto p-4 bg-blue-50 min-h-screen">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
+              <h1 className="text-2xl sm:text-3xl font-bold text-blue-900">Document Templates</h1>
+              <button
+                name='addNewTemplate'
+                onClick={() => setCreateTemplate(true)}
+                className="bg-blue-900 text-white px-4 py-2 sm:px-6 text-sm sm:text-base rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
+              >
+                Add New Template
+              </button>
+            </div>
 
-      {error && <div className="text-red-500 mb-4">{error}</div>}
+            {createTemplate && (
+              <DocumentTemplateForm
+                onClose={() => setCreateTemplate(false)}
+              />
+            )}
 
-      {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">
-              {selectedTemplate ? 'Edit Template' : 'Create Template'}
-            </h2>
-            <DocumentTemplateForm
-              template={selectedTemplate || undefined}
-              onSuccess={() => {
-                setShowForm(false);
-                setSelectedTemplate(null);
-                fetchTemplates();
-              }}
-              onClose={() => {
-                setShowForm(false);
-                setSelectedTemplate(null);
-              }}
-            />
+            {templateToUpdate && (
+              <DocumentTemplateForm
+                existingTemplate={templateToUpdate}
+                patch
+                onClose={() => setTemplateToUpdate(null)}
+              />
+            )}
+
+            {(!templates || templates.length === 0) ? (
+              <div className="bg-blue-50 p-8 rounded-2xl border-2 border-blue-100 text-center max-w-md mx-auto">
+                <div className="flex justify-center mb-4">
+                  <DocumentTextIcon className="w-12 h-12 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-blue-900 mb-2">No Templates Yet</h3>
+                <p className="text-blue-700">
+                  Document templates will appear here once you create them
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {templates.map((template) => (
+                  <AdminDocumentTemplateCard
+                    key={template.id}
+                    template={template}
+                    onEdit={() => {
+                      setTemplateToUpdate(template);
+                    }}
+                    onDelete={() => setTemplateToDelete(template)}
+                  />
+                ))}
+              </div>
+            )}
+
+            {templateToDelete && (
+              <DeleteConfirmationModal
+                onClose={() => setTemplateToDelete(null)}
+                id={templateToDelete.id}
+                type={'document-template'}
+                message={`${templateToDelete.name}`}
+              />
+            )}
           </div>
         </div>
-      )}
-
-      <div className="grid gap-4">
-        {templates.map((template) => (
-          <div key={template.id} className="border p-4 rounded flex justify-between items-center">
-            <div>
-              <h3 className="font-medium">{template.name}</h3>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleDownload(template.id)}
-                className="bg-gray-100 px-3 py-1 rounded hover:bg-gray-200"
-              >
-                Download
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedTemplate(template);
-                  setShowForm(true);
-                }}
-                className="bg-gray-100 px-3 py-1 rounded hover:bg-gray-200"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(template.id)}
-                className="bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+      </AdminOffCanvas>
+    </>
   );
 }

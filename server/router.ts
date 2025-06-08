@@ -1,73 +1,63 @@
-import { Router } from "express";
-import { signUp, login, verifyEmail, resendVerificationToken, forgotPassword, resetPassword } from "./controllers/authController";
-import { listTemplates, createTemplate, updateTemplate, deleteTemplate, downloadTemplate } from "./controllers/documentTemplateController";
+import express from "express"
+import multer from "multer"
+import { documentTemplateController } from "./controllers/documentTemplateController"
 
-import { shipmentController } from "./controllers/shipmentController";
-import { trackingController } from "./controllers/trackingController";
+import { shipmentController } from "./controllers/shipmentController"
 
-import { uploadDocument, uploadPayment, uploadTemplate } from "./middleware/upload";
-import shippingStageController from "./controllers/ShippingStageController";
-import { socialMediaController } from "./controllers/socialMediaController";
+import {
+  signUp,
+  login,
+  verifyEmail,
+  resendVerificationToken,
+  forgotPassword,
+  resetPassword,
+} from "./controllers/authController"
 
-import fs from 'fs';
+import { uploadDocument, uploadPayment, uploadTemplate, uploadSupportingDoc } from "./middleware/upload"
+import shippingStageController from "./controllers/ShippingStageController"
+import { socialMediaController } from "./controllers/socialMediaController"
+import { authenticate } from "./middleware/authenticate"
 
-const uploadReceipt = uploadPayment.single('paymentReceipt');
+const router = express.Router()
+const upload = multer({ dest: "uploads/" })
 
-const router = Router();
+router.post("/admin/shipment/:adminId", shipmentController.createShipment)
+router.get("/admin/shipment/:adminId", shipmentController.listShipments)
+router.get("/admin/shipmentdetails/:id", shipmentController.getShipmentDetails)
+router.patch("/admin/shipment-details/:id", shipmentController.updateShipment)
+router.delete("/admin/shipment-details/:id", shipmentController.deleteShipment)
+router.get("/track/shipment/:trackingId", shipmentController.trackShipment)
 
+router.post("/admin/status/:shipmentId",uploadDocument.single("supportingDocument"),shippingStageController.createStatus)
+router.patch("/admin/status/:statusId",uploadDocument.single("supportingDocument"),shippingStageController.updateStatus)
+router.get("/admin/status/unapproved-payments",shippingStageController.listStatusWithUnApprovedPayment)
+router.delete("/admin/status/:statusId", shippingStageController.deleteShippingStage)
+router.post("/statuses/:shippingStageId/approve-payment", shippingStageController.approvePayment)
+router.post("/statuses/:shippingStageId/upload-receipt", uploadPayment.single('paymentReceipt'), shippingStageController.uploadReceipt)
+router.post("/shipping-stages/:shipmentId",uploadSupportingDoc.single("supportingDocument"),shippingStageController.createStatus)
+router.patch("/shipping-stages/:statusId",uploadSupportingDoc.single("supportingDocument"),shippingStageController.updateStatus)
 
-// Shipment routes
-router.post('/admin/shipment-details/:adminId',  shipmentController.createShipment);
-router.get('/admin/shipment/:adminId',  shipmentController.listShipments);
-router.get('/admin/shipmentdetails/:id',  shipmentController.getShipmentDetails);
-router.patch('/admin/shipment-details/:id',  shipmentController.updateShipment);
-router.delete('/admin/shipment-details/:id',  shipmentController.deleteShipment);
-
-//track Shipment
-router.get('/track/shipment/:trackingId',  trackingController.trackShipment);
-
-// Shipment status routes
-router.post('/admin/status/:shipmentId', uploadDocument.single('supportingDocument'), shippingStageController.createStatus);
-router.patch('/admin/status/:statusId', uploadDocument.single('supportingDocument'), shippingStageController.updateStatus);
-router.delete('/admin/status/:statusId',  shippingStageController.deleteShippingStage);
-
-router.post( '/statuses/:shippingStageId/approve-payment',shippingStageController.approvePayment);
-router.post('/statuses/:shippingStageId/upload-receipt',uploadReceipt,shippingStageController.uploadReceipt);
-
-router.post('/admin/signup', signUp);
-router.post('/admin/login', login);
-router.post('/admin/verify-email', verifyEmail);
-router.post('/admin/resend-verification-token', resendVerificationToken);
-router.post('/admin/forgot-password', forgotPassword);
-router.post('/admin/reset-password', resetPassword);
-
-// Tracking routes
-router.get('/api/track/:trackingId', trackingController.trackShipment);
-
-
-
-// Social Media routes -  Assuming the existence of socialMediaController
-router.get('/api/admin/social-media',  socialMediaController.list);
-router.post('/api/admin/social-media',  socialMediaController.create);
-router.put('/api/admin/social-media/:id',  socialMediaController.update);
-router.delete('/api/admin/social-media/:id',  socialMediaController.remove);
+router.post("/admin/signup", signUp)
+router.post("/admin/login", login)
+router.post("/admin/verify-email", verifyEmail)
+router.post("/admin/resend-verification-token", resendVerificationToken)
+router.post("/admin/forgot-password", forgotPassword)
+router.post("/admin/reset-password", resetPassword)
+router.get("/admin/logout", logout)
+router.get("/admin/me", getMe)
 
 
-// Document Template routes
-router.get('/api/admin/templates', listTemplates);
-router.post('/api/admin/templates', uploadTemplate.single('file'), createTemplate);
-router.put('/api/admin/templates/:id', uploadTemplate.single('file'), updateTemplate);
-router.delete('/api/admin/templates/:id', deleteTemplate);
-router.get('/api/admin/templates/:id/download', downloadTemplate);
+router.get("/api/admin/social-media", socialMediaController.list)
+router.post("/api/admin/social-media", socialMediaController.create)
+router.put("/api/admin/social-media/:id", socialMediaController.update)
+router.delete("/api/admin/social-media/:id", socialMediaController.remove)
 
-// Create directory for uploads if it doesn't exist
-const uploadDirs = ['./uploads/templates', './uploads/supporting-docs'];
-uploadDirs.forEach(dir => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-});
+router.get("/admin/templates/:adminId", upload.single("file"), documentTemplateController.listTemplates)
+router.post("/admin/templates/:adminId", upload.single("file"), documentTemplateController.createTemplate)
+router.put("/admin/templates/:adminId/:id", upload.single("file"), documentTemplateController.updateTemplate)
+router.delete("/admin/templates/:adminId/:id", documentTemplateController.deleteTemplate)
+router.get("/admin/templates/:adminId/:id/download", documentTemplateController.downloadTemplate)
 
 
+export default router
 
-export default router;

@@ -1,4 +1,3 @@
-
 import { format } from 'date-fns';
 
 describe('Admin Journeys', () => {

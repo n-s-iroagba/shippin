@@ -1,4 +1,4 @@
- describe('Signup Flow', () => {
+describe('Signup Flow', () => {
     const testUser = {
       name: 'Nnamdi Solomon Iroagba',
       email: 'nnamdisolomon1@gmail.com',

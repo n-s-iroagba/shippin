@@ -1,4 +1,3 @@
-
 export interface SocialMediaAttributes {
   id: number;
   adminId: number;

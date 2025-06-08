@@ -1,9 +1,8 @@
-
 export interface DocumentTemplateAttributes {
   id: number;
   adminId: number;
   name: string;
-  filePath: string;
+  file: Buffer;
 }
 
 export interface CreateDocumentTemplateDto {
@@ -12,6 +11,7 @@ export interface CreateDocumentTemplateDto {
 }
 
 export interface UpdateDocumentTemplateDto {
+  
   name?: string;
   file?: File;
 }

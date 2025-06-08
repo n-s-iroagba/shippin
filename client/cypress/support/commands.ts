@@ -8,5 +8,3 @@ Cypress.Commands.add('login', (email: string, password: string) => {
   cy.get('button[type="submit"]').click();
   cy.url().should('include', '/admin/dashboard');
 });
-
- 

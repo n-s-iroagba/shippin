@@ -1,134 +1,103 @@
+'use client'
 
-'use client';
-
-import { useState, useEffect } from 'react';
-import { ApiService } from '@/services/api.service';
+import { useState } from 'react';
+import { SocialMedia } from '@/types/socialMedia';
 import SocialMediaForm from '@/components/SocialMediaForm';
-import Loading from '@/components/Loading';
-import { SocialMediaAttributes } from '@/types/social-media.types';
+import AdminOffCanvas from '@/components/AdminOffCanvas';
+import { useGetList } from '@/hooks/useFetch';
+import AdminSocialMediaCard from '@/components/AdminSocialMediaCard';
+import { DeleteConfirmationModal } from '@/components/DeleteConfirmationModal';
+import { Spinner } from '@/components/Spinner';
+import ErrorComponent from '@/components/ErrorComponent';
+import { LinkIcon } from '@heroicons/react/24/outline';
 
-export default function SocialMediaPage() {
-  const [socialMedia, setSocialMedia] = useState<SocialMediaAttributes[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [showForm, setShowForm] = useState(false);
-  const [selectedSocial, setSelectedSocial] = useState<SocialMediaAttributes | null>(null);
-  const [successMessage, setSuccessMessage] = useState('');
+export default function SocialMediaCrudPage() {
+  const { data: socialMedia, loading, error } = useGetList<SocialMedia>('social-media');
+  const [createSocialMedia, setCreateSocialMedia] = useState(false);
+  const [socialMediaToDelete, setSocialMediaToDelete] = useState<SocialMedia | null>(null);
+  const [socialMediaToUpdate, setSocialMediaToUpdate] = useState<SocialMedia | null>(null);
 
-  const fetchSocialMedia = async () => {
-    try {
-      const data = await ApiService.listSocialMedia();
-      setSocialMedia(data);
-      setError('');
-    } catch (err: any) {
-      setError('Unable to load social media links. Please try again later.');
-      console.error('Failed to fetch social media:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (loading) {
+    return (
+      <AdminOffCanvas>
+        <div className="flex justify-center py-12">
+          <Spinner className="w-10 h-10 text-blue-600" />
+        </div>
+      </AdminOffCanvas>
+    );
+  }
 
-  useEffect(() => {
-    fetchSocialMedia();
-  }, []);
-
-  const handleSubmit = async (data: any) => {
-    try {
-      if (selectedSocial) {
-        await ApiService.updateSocialMedia(selectedSocial.id, data);
-        setSuccessMessage('Social media link updated successfully');
-      } else {
-        await ApiService.createSocialMedia(data);
-        setSuccessMessage('Social media link created successfully');
-      }
-      setShowForm(false);
-      fetchSocialMedia();
-      setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (err: any) {
-      throw err;
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this social media link?')) return;
-    
-    try {
-      await ApiService.deleteSocialMedia(id);
-      setSocialMedia(socialMedia.filter(s => s.id !== id));
-      setSuccessMessage('Social media link deleted successfully');
-      setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (err: any) {
-      if (err.status === 403) {
-        setError('You do not have permission to delete this link.');
-      } else if (err.status === 404) {
-        setError('Social media link not found.');
-      } else {
-        setError('Could not delete social media link. Please try again later.');
-      }
-      setTimeout(() => setError(''), 3000);
-    }
-  };
-
-  if (loading) return <Loading />;
+  if (error) {
+    return (
+      <AdminOffCanvas>
+        <ErrorComponent message={error || "Failed to load social media links"} />
+      </AdminOffCanvas>
+    );
+  }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Social Media Links</h1>
-        <button
-          onClick={() => {
-            setSelectedSocial(null);
-            setShowForm(true);
-          }}
-          className="bg-primary-blue text-white px-4 py-2 rounded"
-        >
-          Add Social Media
-        </button>
-      </div>
-
-      {error && <div className="text-red-500 mb-4">{error}</div>}
-      {successMessage && <div className="text-green-500 mb-4">{successMessage}</div>}
-
-      {showForm && (
-        <div className="mb-6 p-4 border rounded">
-          <SocialMediaForm
-            social={selectedSocial || undefined}
-            onSubmit={handleSubmit}
-            onCancel={() => setShowForm(false)}
-          />
-        </div>
-      )}
-
-      <div className="grid gap-4">
-        {socialMedia.map((social) => (
-          <div key={social.id} className="border p-4 rounded">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="font-bold">{social.name}</h3>
-                <a href={social.url} target="_blank" rel="noopener noreferrer" 
-                   className="text-blue-500 hover:underline">{social.url}</a>
-              </div>
-              <div className="space-x-2">
-                <button
-                  onClick={() => {
-                    setSelectedSocial(social);
-                    setShowForm(true);
-                  }}
-                  className="text-primary-blue"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(social.id)}
-                  className="text-red-500"
-                >
-                  Delete
-                </button>
-              </div>
+    <>
+      <AdminOffCanvas>
+        <div className="container mx-auto p-4 bg-blue-50 min-h-screen">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
+              <h1 className="text-2xl sm:text-3xl font-bold text-blue-900">Social Media Links</h1>
+              <button
+                name='addNewSocialMedia'
+                onClick={() => setCreateSocialMedia(true)}
+                className="bg-blue-900 text-white px-4 py-2 sm:px-6 text-sm sm:text-base rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
+              >
+                Add New Social Media Link
+              </button>
             </div>
+
+            {createSocialMedia && (
+              <SocialMediaForm />
+            )}
+
+            {socialMediaToUpdate && (
+              <SocialMediaForm
+                existingSocialMedia={socialMediaToUpdate}
+                patch
+              />
+            )}
+
+            {(!socialMedia || socialMedia.length === 0) ? (
+              <div className="bg-blue-50 p-8 rounded-2xl border-2 border-blue-100 text-center max-w-md mx-auto">
+                <div className="flex justify-center mb-4">
+                  <LinkIcon className="w-12 h-12 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-blue-900 mb-2">No Social Media Links Yet</h3>
+                <p className="text-blue-700">
+                  Social media links will appear here once you add them
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {socialMedia.map((sm) => (
+                  <AdminSocialMediaCard
+                    key={sm.id}
+                    socialMedia={sm}
+                    onEdit={() => {
+                      setSocialMediaToUpdate(sm);
+                    }}
+                    onDelete={() => setSocialMediaToDelete(sm)}
+                  />
+                ))}
+              </div>
+            )}
+
+            {socialMediaToDelete && (
+              <DeleteConfirmationModal
+                onClose={() => setSocialMediaToDelete(null)}
+                id={socialMediaToDelete.id}
+                type={'social-media'}
+                message={`${socialMediaToDelete.name} (${socialMediaToDelete.url})`}
+              />
+            )}
           </div>
-        ))}
-      </div>
-    </div>
+        </div>
+      </AdminOffCanvas>
+    </>
   );
 }

@@ -1,131 +1,176 @@
-import { Request, Response } from 'express';
-import { DocumentTemplate } from '../models/DocumentTemplate';
-import { CustomError } from '../CustomError';
-import fs from 'fs/promises';
-import multer from 'multer';
-import logger from '../utils/logger';
+import type { Request, Response } from "express"
+import { DocumentTemplate } from "../models/DocumentTemplate"
+import logger from "../utils/logger"
 
-// Setup multer storage
-const storage = multer.diskStorage({
-  destination: './uploads/templates',
-  filename: (req, file, cb) => {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
-    cb(null, `${uniqueSuffix}-${file.originalname}`);
-  }
-});
+export const documentTemplateController = {
+  listTemplates: async (req: Request, res: Response): Promise<any> => {
+    try {
+      const adminId = Number.parseInt(req.params.adminId)
+      if (isNaN(adminId)) {
+        return res.status(400).json({ message: "Invalid admin ID" })
+      }
 
-export const upload = multer({ storage });
+      const templates = await DocumentTemplate.findAll({
+        where: { adminId },
+        order: [["createdAt", "DESC"]],
+      })
 
-export const listTemplates = async (req: Request, res: Response):Promise<any> => {
-  try {
-    const adminId = Number(req.params.adminId);
-    const templates = await DocumentTemplate.findAll({ where: { adminId } });
-    res.status(200).json(templates);
-  } catch (error) {
-    logger.error('Failed to fetch templates:', { error });
-    return res.status(500).json({ message: 'Failed to fetch document templates' });
-  }
-};
-
-export const createTemplate = async (req: Request, res: Response):Promise<any> => {
-  try {
-    const adminId = Number(req.params.adminId);
-    const { name } = req.body;
-    const file = req.file;
-
-    if (!name || !file) {
-      throw new CustomError(400, 'Name and file are required');
+      res.status(200).json(templates)
+    } catch (error) {
+      logger.error("Failed to fetch templates:", { error })
+      return res.status(500).json({ message: "Failed to fetch document templates" })
     }
+  },
 
-    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    if (!allowedTypes.includes(file.mimetype)) {
-      throw new CustomError(400, 'Invalid file type. Only PDF and Word documents are allowed.');
+  createTemplate: async (req: Request, res: Response): Promise<any> => {
+    try {
+      const adminId = Number.parseInt(req.params.adminId)
+      if (isNaN(adminId)) {
+        return res.status(400).json({ message: "Invalid admin ID" })
+      }
+
+      const { name } = req.body
+      const file = req.file
+
+      if (!name || !name.trim()) {
+        return res.status(400).json({ message: "Template name is required" })
+      }
+
+      if (!file) {
+        return res.status(400).json({ message: "File is required" })
+      }
+
+      const allowedTypes = [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ]
+
+      if (!allowedTypes.includes(file.mimetype)) {
+        return res.status(400).json({ message: "Invalid file type. Only PDF and Word documents are allowed." })
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        // 10MB limit
+        return res.status(400).json({ message: "File size must be less than 10MB" })
+      }
+
+      const template = await DocumentTemplate.create({
+        adminId,
+        name: name.trim(),
+        filePath: file.buffer.toString("base64"),
+      })
+
+      res.status(201).json(template)
+    } catch (error) {
+      logger.error("Create template error:", { error })
+      return res.status(500).json({ message: "Failed to create template" })
     }
+  },
 
-    const template = await DocumentTemplate.create({
-      adminId,
-      name,
-      filePath: file.path,
-    });
+  updateTemplate: async (req: Request, res: Response): Promise<any> => {
+    try {
+      const adminId = Number.parseInt(req.params.adminId)
+      const templateId = Number.parseInt(req.params.id)
 
-    res.status(201).json(template);
-  } catch (error) {
-    if (req.file) {
-      await fs.unlink(req.file.path).catch(console.error);
+      if (isNaN(adminId) || isNaN(templateId)) {
+        return res.status(400).json({ message: "Invalid admin ID or template ID" })
+      }
+
+      const { name } = req.body
+      const file = req.file
+
+      const template = await DocumentTemplate.findByPk(templateId)
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" })
+      }
+
+      if (template.adminId !== adminId) {
+        return res.status(403).json({ message: "Not authorized to update this template" })
+      }
+
+      if (name && name.trim()) {
+        template.name = name.trim()
+      }
+
+      if (file) {
+        const allowedTypes = [
+          "application/pdf",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ]
+
+        if (!allowedTypes.includes(file.mimetype)) {
+          return res.status(400).json({ message: "Invalid file type. Only PDF and Word documents are allowed." })
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+          // 10MB limit
+          return res.status(400).json({ message: "File size must be less than 10MB" })
+        }
+
+        template.filePath = file.buffer.toString("base64")
+      }
+
+      await template.save()
+      res.status(200).json(template)
+    } catch (error) {
+      logger.error("Update template error:", { error })
+      return res.status(500).json({ message: "Failed to update template" })
     }
-    const status = error instanceof CustomError ? error.code : 500;
-    const message = error instanceof CustomError ? error.message : 'Failed to create template';
-    logger.error('Create template error:', { error });
-    return res.status(status).json({ message });
-  }
-};
+  },
 
-export const updateTemplate = async (req: Request, res: Response):Promise<any> => {
-  try {
-    const adminId = Number(req.params.adminId);
-    const { id } = req.params;
-    const { name } = req.body;
-    const file = req.file;
+  deleteTemplate: async (req: Request, res: Response): Promise<any> => {
+    try {
+      const adminId = Number.parseInt(req.params.adminId)
+      const templateId = Number.parseInt(req.params.id)
 
-    const template = await DocumentTemplate.findByPk(id);
-    if (!template) throw new CustomError(404, 'Template not found');
-    if (template.adminId !== adminId) throw new CustomError(403, 'Not authorized');
+      if (isNaN(adminId) || isNaN(templateId)) {
+        return res.status(400).json({ message: "Invalid admin ID or template ID" })
+      }
 
-    if (file) {
-      await fs.unlink(template.filePath).catch(console.error);
-      template.filePath = file.path;
+      const template = await DocumentTemplate.findByPk(templateId)
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" })
+      }
+
+      if (template.adminId !== adminId) {
+        return res.status(403).json({ message: "Not authorized to delete this template" })
+      }
+
+      await template.destroy()
+      res.status(200).json({ message: "Template deleted successfully" })
+    } catch (error) {
+      logger.error("Delete template error:", { error })
+      return res.status(500).json({ message: "Failed to delete template" })
     }
+  },
 
-    if (name) template.name = name;
+  downloadTemplate: async (req: Request, res: Response): Promise<any> => {
+    try {
+      const adminId = Number.parseInt(req.params.adminId)
+      const templateId = Number.parseInt(req.params.id)
 
-    await template.save();
-    res.status(200).json(template);
-  } catch (error) {
-    if (req.file) {
-      await fs.unlink(req.file.path).catch(console.error);
+      if (isNaN(adminId) || isNaN(templateId)) {
+        return res.status(400).json({ message: "Invalid admin ID or template ID" })
+      }
+
+      const template = await DocumentTemplate.findByPk(templateId)
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" })
+      }
+
+      if (template.adminId !== adminId) {
+        return res.status(403).json({ message: "Not authorized to access this template" })
+      }
+
+      const buffer = Buffer.from(template.filePath, "base64")
+      res.setHeader("Content-Type", "application/octet-stream")
+      res.setHeader("Content-Disposition", `attachment; filename="${template.name}"`)
+      res.send(buffer)
+    } catch (error) {
+      logger.error("Download template error:", { error })
+      return res.status(500).json({ message: "Failed to download template" })
     }
-    const status = error instanceof CustomError ? error.code : 500;
-    const message = error instanceof CustomError ? error.message : 'Failed to update template';
-    logger.error('Update template error:', { error });
-    return res.status(status).json({ message });
   }
-};
-
-export const deleteTemplate = async (req: Request, res: Response):Promise<any> => {
-  try {
-    const adminId = Number(req.params.adminId);
-    const { id } = req.params;
-
-    const template = await DocumentTemplate.findByPk(id);
-    if (!template) throw new CustomError(404, 'Template not found');
-    if (template.adminId !== adminId) throw new CustomError(403, 'Not authorized');
-
-    await fs.unlink(template.filePath).catch(console.error);
-    await template.destroy();
-
-    res.status(200).json({ message: 'Template deleted successfully' });
-  } catch (error) {
-    const status = error instanceof CustomError ? error.code : 500;
-    const message = error instanceof CustomError ? error.message : 'Failed to delete template';
-    logger.error('Delete template error:', { error });
-    return res.status(status).json({ message });
-  }
-};
-
-export const downloadTemplate = async (req: Request, res: Response):Promise<any> => {
-  try {
-    const adminId = Number(req.params.adminId);
-    const { id } = req.params;
-
-    const template = await DocumentTemplate.findByPk(id);
-    if (!template) throw new CustomError(404, 'Template not found');
-    if (template.adminId !== adminId) throw new CustomError(403, 'Not authorized');
-
-    res.download(template.filePath);
-  } catch (error) {
-    const status = error instanceof CustomError ? error.code : 500;
-    const message = error instanceof CustomError ? error.message : 'Failed to download template';
-    logger.error('Download template error:', { error });
-    return res.status(status).json({ message });
-  }
-};
+}

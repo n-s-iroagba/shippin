@@ -15,6 +15,3 @@ export const formatDate = (daysToAdd: number): string => {
   
     return `${day} ${dateNum}${suffix} ${month} ${date.getFullYear()}`;
   };
-  
-
-  
