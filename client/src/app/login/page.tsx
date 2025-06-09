@@ -1,51 +1,37 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { authApi } from "@/utils/apiUtils"
-import ErrorAlert from "@/components/ErrorAlert"
+
 
 
 export default function LoginPage() {
-  const [error, setError] = useState("")
-  const router = useRouter()
 
-  const handleSubmit = async (formData: Record<string, string>) => {
-    try {
-      const { data, error: apiError } = await authApi.login({
-        email: formData.email,
-        password: formData.password,
-      })
 
-      if (data?.loginToken) {
-        localStorage.setItem("admin_token", data.loginToken)
-        router.push("/admin/dashboard")
-      } else if (apiError) {
-        handleApiError(apiError, data as { verificationToken: string })
-      }
-    } catch (err) {
-      console.error("Login error:", err)
-      setError("An error occurred. Please try again later.")
-    }
+  const handleSubmit = async () => {
+    // try {
+    //   const { data, error: apiError } = await authApi.login({
+    //     email: formData.email,
+    //     password: formData.password,
+    //   })
+
+    //   if (data?.loginToken) {
+    //     localStorage.setItem("admin_token", data.loginToken)
+    //     router.push("/admin/dashboard")
+    //   } else if (apiError) {
+    //     handleApiError(apiError, data as { verificationToken: string })
+    //   }
+    // } catch (err) {
+    //   console.error("Login error:", err)
+    //   setError("An error occurred. Please try again later.")
+    // }
   }
 
-  const handleApiError = (error: string, data?: { verificationToken: string }) => {
-    if (error.includes("Invalid credentials")) {
-      setError("Incorrect email or password.")
-    } else if (error.includes("Email not verified")) {
-      alert("Please verify your email before logging in.")
-      router.push(`/admin/verify-email/${data?.verificationToken || ""}`)
-    } else {
-      setError("An error occurred. Please try again later.")
-    }
-  }
 
   return (
            <div className="flex justify-center align-center pt-5">
         <form
         className="w-full max-w-lg bg-white bg-opacity-90 p-6 rounded-lg border-b-4 border-goldenrod"
         >
-          {error && <ErrorAlert error={error}/>}
+          {/* {error && <ErrorAlert error={error}/>} */}
           <div className="mb-4">
             <h2 className="text-black text-center">ADMIN LOGIN</h2>
           </div>

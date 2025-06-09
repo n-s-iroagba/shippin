@@ -1,7 +1,7 @@
 
 "use client";
 
-import Loading from "@/components/Loading";
+
 import { CreateShipmentModal } from "@/components/ShipmentModals";
 
 import { useRouter } from "next/navigation";
@@ -10,6 +10,8 @@ import { ShipmentDetails } from "@/types/shipment.types";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetList } from "@/hooks/useGet";
 import { routes } from "@/data/routes";
+import { Spinner } from "@/components/Spinner";
+import ErrorAlert from "@/components/ErrorAlert";
 
 const ShipmentDashboard: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -27,8 +29,8 @@ const ShipmentDashboard: React.FC = () => {
   };
 
   if (!adminId) return null;
-  if (error) return <p className="text-center text-red-500 text-lg">{error}</p>;
-  if (loading)return <Loading/>
+  if (error) return <ErrorAlert message={error}/>;
+  if (loading)return <Spinner/>
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">

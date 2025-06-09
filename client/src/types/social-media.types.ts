@@ -1,4 +1,4 @@
-export interface SocialMediaAttributes {
+export interface SocialMedia {
   id: number;
   adminId: number;
   name: string;
@@ -12,4 +12,3 @@ export interface CreateSocialMediaDto {
   url: string;
 }
 
-export interface UpdateSocialMediaDto extends Partial<CreateSocialMediaDto> {}

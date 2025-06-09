@@ -7,18 +7,15 @@ export const routes = {
     delete: (id: number) => `/admin/shipment-details/${id}`,
     track: (trackingId: number) => `/track/shipment/${trackingId}`,
   },
-  status: {
-    create: (shipmentId: number) => `/admin/status/${shipmentId}`,
-    update: (statusId: number) => `/admin/status/${statusId}`,
-    unapprovedPayments: `/admin/status/unapproved-payments`,
-    delete: (statusId: number) => `/admin/status/${statusId}`,
-    approvePayment: (shippingStageId: number) => `/statuses/${shippingStageId}/approve-payment`,
-    uploadReceipt: (shippingStageId: number) => `/statuses/${shippingStageId}/upload-receipt`,
+  stage: {
+    create: (shipmentId: number) => `/admin/stage/${shipmentId}`,
+    update: (stageId: number) => `/admin/stage/${stageId}`,
+    unapprovedPayments:(adminId: number) => `/admin/stage/unapproved-payments/${adminId}`,
+    delete: (stageId: number) => `/admin/stage/${stageId}`,
+    approvePayment: (shippingStageId: number) => `/stagees/${shippingStageId}/approve-payment`,
+    uploadReceipt: (shippingStageId: number) => `/stagees/${shippingStageId}/upload-receipt`,
   },
-  shippingStages: {
-    create: (shipmentId: number) => `/shipping-stages/${shipmentId}`,
-    update: (statusId: number) => `/shipping-stages/${statusId}`,
-  },
+ 
   auth: {
     signup: `/admin/signup`,
     login: `/admin/login`,
@@ -30,10 +27,16 @@ export const routes = {
     me:'/admin/me'
   },
   socialMedia: {
-    list: `/api/admin/social-media`,
-    create: `/api/admin/social-media`,
+    list: (adminId: number) =>`/api/admin/social-media/${adminId}`,
+    create: (adminId: number) =>`/api/admin/social-media/${adminId}`,
     update: (id: number) => `/api/admin/social-media/${id}`,
     delete: (id: number) => `/api/admin/social-media/${id}`,
+  },
+   cryptoWallet: {
+  list: (adminId: number) =>`/api/admin/crypto-wallet/${adminId}`,
+    create: (adminId: number) =>`/api/admin/crypto-wallet/${adminId}`,
+    update: (id: number) => `/api/admin/crypto-wallet/${id}`,
+    delete: (id: number) => `/api/admin/crypto-wallet/${id}`,
   },
   templates: {
     list: (adminId: number) => `/admin/templates/${adminId}`,

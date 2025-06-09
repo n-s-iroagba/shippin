@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { authApi } from '@/utils/apiUtils';
 import ErrorAlert from '@/components/ErrorAlert';
+
 
 export default function SignupPage() {
   const [name, setName] = useState('');
@@ -22,13 +22,9 @@ export default function SignupPage() {
     }
 
     try {
-      const {verificationToken } = await authApi.signup({
-        name,
-        email,
-        password,
-      });
    
-        router.push(`/admin/verify-email/${verificationToken}`);
+   
+        router.push(`/admin/verify-email/}`);
      
       }
   catch (err) {
@@ -45,7 +41,7 @@ export default function SignupPage() {
       >
         <h2 className="text-2xl font-bold text-center">Admin Signup</h2>
 
-        {error && <ErrorAlert error={error}/>}
+        {error && <ErrorAlert message={error}/>}
 
         <div>
           <label className="block mb-1 font-medium text-gray-700">Full Name</label>

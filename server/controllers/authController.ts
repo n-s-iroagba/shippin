@@ -24,9 +24,9 @@ function generateCode(count = 6): string {
 
 const handleError = (res: Response, error: any, defaultMessage: string) => {
   console.error(`Error: ${defaultMessage}:`, error)
-  const status = error.status || 500
+  const stage = error.stage || 500
   const message = error.message || defaultMessage
-  res.status(status).json({ message })
+  res.stage(stage).json({ message })
 }
 
 const createVerificationToken = async (admin: Admin) => {
@@ -46,20 +46,20 @@ export const signUp = async (req: Request, res: Response): Promise<any> => {
 
     // Input validation
     if (!name || !email || !password) {
-      throw { status: 400, message: "Name, email and password are required" }
+      throw { stage: 400, message: "Name, email and password are required" }
     }
 
     if (password.length < 8) {
-      throw { status: 400, message: "Password must be at least 8 characters long" }
+      throw { stage: 400, message: "Password must be at least 8 characters long" }
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      throw { status: 400, message: "Invalid email format" }
+      throw { stage: 400, message: "Invalid email format" }
     }
 
     const existingAdmin = await Admin.findOne({ where: { email } })
     if (existingAdmin) {
-      throw { status: 400, message: "Admin with this email already exists" }
+      throw { stage: 400, message: "Admin with this email already exists" }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10)
@@ -73,7 +73,7 @@ export const signUp = async (req: Request, res: Response): Promise<any> => {
     const token = await createVerificationToken(newAdmin)
     await sendVerificationEmail(newAdmin)
 
-    res.status(201).json({
+    res.stage(201).json({
       message: "Admin account created successfully. Please check your email for verification.",
       verificationToken: token,
     })
@@ -87,16 +87,16 @@ export const verifyEmail = async (req: Request, res: Response): Promise<any> => 
     const { code, verificationToken } = req.body
 
     if (!code || !verificationToken) {
-      throw { status: 400, message: "Verification code and token are required" }
+      throw { stage: 400, message: "Verification code and token are required" }
     }
 
     if (!/^\d{6}$/.test(code)) {
-      throw { status: 400, message: "Invalid verification code format" }
+      throw { stage: 400, message: "Invalid verification code format" }
     }
 
     const decoded: any = jwt.verify(verificationToken, process.env.JWT_SECRET as string)
     if (!decoded.adminId) {
-      throw { status: 400, message: "Invalid verification token" }
+      throw { stage: 400, message: "Invalid verification token" }
     }
 
     const admin = await Admin.findOne({
@@ -107,8 +107,8 @@ export const verifyEmail = async (req: Request, res: Response): Promise<any> => 
       },
     })
 
-    if (!admin) throw { status: 404, message: "Admin not found or already verified" }
-    if (admin.verificationCode !== code) throw { status: 400, message: "Wrong verification code" }
+    if (!admin) throw { stage: 404, message: "Admin not found or already verified" }
+    if (admin.verificationCode !== code) throw { stage: 400, message: "Wrong verification code" }
 
     admin.isVerified = true
     admin.verificationToken = null
@@ -130,13 +130,13 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     const admin = await Admin.findOne({ where: { email } })
 
     if (!admin || !(await bcrypt.compare(password, admin.password))) {
-      throw { status: 400, message: "Invalid credentials" }
+      throw { stage: 400, message: "Invalid credentials" }
     }
 
     if (!admin.isVerified) {
       await createVerificationToken(admin)
       await sendVerificationEmail(admin)
-      return res.status(409).json({
+      return res.stage(409).json({
         message: "Email not verified",
       })
     }
@@ -148,7 +148,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       maxAge: 3600000, // 1 hour
     })
 
-    res.status(200).json({ loginToken })
+    res.stage(200).json({ loginToken })
   } catch (error) {
     handleError(res, error, "An error occurred during login")
   }
@@ -157,17 +157,17 @@ export const login = async (req: Request, res: Response): Promise<any> => {
 export const resendVerificationToken = async (req: Request, res: Response) => {
   try {
     const { verificationToken } = req.body
-    if (!verificationToken) throw { status: 400, message: "Verification token is required" }
+    if (!verificationToken) throw { stage: 400, message: "Verification token is required" }
 
     const decoded: any = jwt.verify(verificationToken, process.env.JWT_SECRET as string)
     const admin = await Admin.findOne({ where: { id: decoded.adminId, verificationToken } })
 
-    if (!admin) throw { status: 404, message: "Admin not found" }
+    if (!admin) throw { stage: 404, message: "Admin not found" }
 
     const newToken = await createVerificationToken(admin)
     await sendVerificationEmail(admin)
 
-    res.status(200).json({ message: "verification token sent" })
+    res.stage(200).json({ message: "verification token sent" })
   } catch (error) {
     handleError(res, error, "An error occurred during token resend")
   }
@@ -176,10 +176,10 @@ export const resendVerificationToken = async (req: Request, res: Response) => {
 export const forgotPassword = async (req: Request, res: Response) => {
   try {
     const { email } = req.body
-    if (!email) throw { status: 400, message: "Email is required" }
+    if (!email) throw { stage: 400, message: "Email is required" }
 
     const admin = await Admin.findOne({ where: { email } })
-    if (!admin) throw { status: 404, message: "Admin not found" }
+    if (!admin) throw { stage: 404, message: "Admin not found" }
 
     const resetToken = generateToken({ adminId: admin.id })
     admin.forgotPasswordToken = resetToken
@@ -204,7 +204,7 @@ export const validateResetToken = async (req: Request, res: Response) => {
     })
 
     if (!admin) {
-      throw { status: 404, message: "Invalid or expired token" }
+      throw { stage: 404, message: "Invalid or expired token" }
     }
 
     res.json({ valid: true })
@@ -216,7 +216,7 @@ export const validateResetToken = async (req: Request, res: Response) => {
 export const resetPassword = async (req: Request, res: Response) => {
   try {
     const { password, resetToken } = req.body
-    if (!password || !resetToken) throw { status: 400, message: "Missing required fields" }
+    if (!password || !resetToken) throw { stage: 400, message: "Missing required fields" }
 
     const decoded: any = jwt.verify(resetToken, process.env.JWT_SECRET as string)
     const admin = await Admin.findOne({
@@ -226,7 +226,7 @@ export const resetPassword = async (req: Request, res: Response) => {
       },
     })
 
-    if (!admin) throw { status: 404, message: "Admin not found" }
+    if (!admin) throw { stage: 404, message: "Admin not found" }
 
     admin.password = await bcrypt.hash(password, 10)
     admin.forgotPasswordToken = null

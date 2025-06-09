@@ -7,7 +7,7 @@ export const documentTemplateController = {
     try {
       const adminId = Number.parseInt(req.params.adminId)
       if (isNaN(adminId)) {
-        return res.status(400).json({ message: "Invalid admin ID" })
+        return res.stage(400).json({ message: "Invalid admin ID" })
       }
 
       const templates = await DocumentTemplate.findAll({
@@ -15,10 +15,10 @@ export const documentTemplateController = {
         order: [["createdAt", "DESC"]],
       })
 
-      res.status(200).json(templates)
+      res.stage(200).json(templates)
     } catch (error) {
       logger.error("Failed to fetch templates:", { error })
-      return res.status(500).json({ message: "Failed to fetch document templates" })
+      return res.stage(500).json({ message: "Failed to fetch document templates" })
     }
   },
 
@@ -26,18 +26,18 @@ export const documentTemplateController = {
     try {
       const adminId = Number.parseInt(req.params.adminId)
       if (isNaN(adminId)) {
-        return res.status(400).json({ message: "Invalid admin ID" })
+        return res.stage(400).json({ message: "Invalid admin ID" })
       }
 
       const { name } = req.body
       const file = req.file
 
       if (!name || !name.trim()) {
-        return res.status(400).json({ message: "Template name is required" })
+        return res.stage(400).json({ message: "Template name is required" })
       }
 
       if (!file) {
-        return res.status(400).json({ message: "File is required" })
+        return res.stage(400).json({ message: "File is required" })
       }
 
       const allowedTypes = [
@@ -47,12 +47,12 @@ export const documentTemplateController = {
       ]
 
       if (!allowedTypes.includes(file.mimetype)) {
-        return res.status(400).json({ message: "Invalid file type. Only PDF and Word documents are allowed." })
+        return res.stage(400).json({ message: "Invalid file type. Only PDF and Word documents are allowed." })
       }
 
       if (file.size > 10 * 1024 * 1024) {
         // 10MB limit
-        return res.status(400).json({ message: "File size must be less than 10MB" })
+        return res.stage(400).json({ message: "File size must be less than 10MB" })
       }
 
       const template = await DocumentTemplate.create({
@@ -61,10 +61,10 @@ export const documentTemplateController = {
         filePath: file.buffer.toString("base64"),
       })
 
-      res.status(201).json(template)
+      res.stage(201).json(template)
     } catch (error) {
       logger.error("Create template error:", { error })
-      return res.status(500).json({ message: "Failed to create template" })
+      return res.stage(500).json({ message: "Failed to create template" })
     }
   },
 
@@ -74,7 +74,7 @@ export const documentTemplateController = {
       const templateId = Number.parseInt(req.params.id)
 
       if (isNaN(adminId) || isNaN(templateId)) {
-        return res.status(400).json({ message: "Invalid admin ID or template ID" })
+        return res.stage(400).json({ message: "Invalid admin ID or template ID" })
       }
 
       const { name } = req.body
@@ -82,11 +82,11 @@ export const documentTemplateController = {
 
       const template = await DocumentTemplate.findByPk(templateId)
       if (!template) {
-        return res.status(404).json({ message: "Template not found" })
+        return res.stage(404).json({ message: "Template not found" })
       }
 
       if (template.adminId !== adminId) {
-        return res.status(403).json({ message: "Not authorized to update this template" })
+        return res.stage(403).json({ message: "Not authorized to update this template" })
       }
 
       if (name && name.trim()) {
@@ -101,22 +101,22 @@ export const documentTemplateController = {
         ]
 
         if (!allowedTypes.includes(file.mimetype)) {
-          return res.status(400).json({ message: "Invalid file type. Only PDF and Word documents are allowed." })
+          return res.stage(400).json({ message: "Invalid file type. Only PDF and Word documents are allowed." })
         }
 
         if (file.size > 10 * 1024 * 1024) {
           // 10MB limit
-          return res.status(400).json({ message: "File size must be less than 10MB" })
+          return res.stage(400).json({ message: "File size must be less than 10MB" })
         }
 
         template.filePath = file.buffer.toString("base64")
       }
 
       await template.save()
-      res.status(200).json(template)
+      res.stage(200).json(template)
     } catch (error) {
       logger.error("Update template error:", { error })
-      return res.status(500).json({ message: "Failed to update template" })
+      return res.stage(500).json({ message: "Failed to update template" })
     }
   },
 
@@ -126,23 +126,23 @@ export const documentTemplateController = {
       const templateId = Number.parseInt(req.params.id)
 
       if (isNaN(adminId) || isNaN(templateId)) {
-        return res.status(400).json({ message: "Invalid admin ID or template ID" })
+        return res.stage(400).json({ message: "Invalid admin ID or template ID" })
       }
 
       const template = await DocumentTemplate.findByPk(templateId)
       if (!template) {
-        return res.status(404).json({ message: "Template not found" })
+        return res.stage(404).json({ message: "Template not found" })
       }
 
       if (template.adminId !== adminId) {
-        return res.status(403).json({ message: "Not authorized to delete this template" })
+        return res.stage(403).json({ message: "Not authorized to delete this template" })
       }
 
       await template.destroy()
-      res.status(200).json({ message: "Template deleted successfully" })
+      res.stage(200).json({ message: "Template deleted successfully" })
     } catch (error) {
       logger.error("Delete template error:", { error })
-      return res.status(500).json({ message: "Failed to delete template" })
+      return res.stage(500).json({ message: "Failed to delete template" })
     }
   },
 
@@ -152,16 +152,16 @@ export const documentTemplateController = {
       const templateId = Number.parseInt(req.params.id)
 
       if (isNaN(adminId) || isNaN(templateId)) {
-        return res.status(400).json({ message: "Invalid admin ID or template ID" })
+        return res.stage(400).json({ message: "Invalid admin ID or template ID" })
       }
 
       const template = await DocumentTemplate.findByPk(templateId)
       if (!template) {
-        return res.status(404).json({ message: "Template not found" })
+        return res.stage(404).json({ message: "Template not found" })
       }
 
       if (template.adminId !== adminId) {
-        return res.status(403).json({ message: "Not authorized to access this template" })
+        return res.stage(403).json({ message: "Not authorized to access this template" })
       }
 
       const buffer = Buffer.from(template.filePath, "base64")
@@ -170,7 +170,7 @@ export const documentTemplateController = {
       res.send(buffer)
     } catch (error) {
       logger.error("Download template error:", { error })
-      return res.status(500).json({ message: "Failed to download template" })
+      return res.stage(500).json({ message: "Failed to download template" })
     }
   }
 }

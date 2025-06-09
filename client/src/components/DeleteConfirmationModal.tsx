@@ -8,7 +8,7 @@ import { useState } from "react"
 interface DeleteModalProps {
   id: number | string
   onClose: () => void
-  type: "shipment" | "wallet" | "stage" | "social-media"
+  type: "shipment" | "wallet" | "stage" | "social-media"|'document-template'
   message: string
 }
 
@@ -17,6 +17,7 @@ const API_ROUTES_MAP = {
   wallet: routes.cryptoWallet.delete,
   stage: routes.shippingStages.delete,
   "social-media": routes.socialMedia.delete,
+  'document-template':routes.templates.delete
 }
 
 export function DeleteConfirmationModal({ id, onClose, type, message }: DeleteModalProps) {

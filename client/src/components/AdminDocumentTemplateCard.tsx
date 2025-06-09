@@ -28,7 +28,7 @@ const AdminDocumentTemplateCard: React.FC<AdminDocumentTemplateCardProps> = ({
       const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3001'}/admin/templates/${adminId}/${template.id}/download`);
 
       if (!response.ok) {
-        throw new Error(`Failed to download template: ${response.statusText}`);
+        throw new Error(`Failed to download template: ${response.stageText}`);
       }
 
       const blob = await response.blob();

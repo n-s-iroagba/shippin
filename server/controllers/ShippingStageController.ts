@@ -66,23 +66,23 @@ async createStatus(req: Request, res: Response, next: NextFunction): Promise<any
     }
 
     console.log('About to create ShippingStage...')
-    const status = await ShippingStage.create(stageData)
-    console.log('Successfully created status:', status.id)
+    const stage = await ShippingStage.create(stageData)
+    console.log('Successfully created stage:', stage.id)
     
-    res.status(201).json(status)
+    res.stage(201).json(stage)
   } catch (error:any) {
     console.error('Error in createStatus:', error)
     console.error('Error message:', error.message)
     console.error('Error stack:', error.stack)
     
-    logger.error("Error creating shipment status:", { 
+    logger.error("Error creating shipment stage:", { 
       error: error.message,
       stack: error.stack,
       shipmentId: req.params.shipmentId,
       body: req.body
     })
     
-    return res.status(500).json({ 
+    return res.stage(500).json({ 
       message: "Error creating shipping stage",
       error: error.message // Include error message for debugging
     })
@@ -91,13 +91,13 @@ async createStatus(req: Request, res: Response, next: NextFunction): Promise<any
 
   async updateStatus(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
-      const { statusId } = req.params
+      const { stageId } = req.params
       const file = (req as any).file
       const data = { ...req.body }
 
-      const status = await ShippingStage.findByPk(statusId)
-      if (!status) {
-        return res.status(404).json({ message: "Shipping stage not found" })
+      const stage = await ShippingStage.findByPk(stageId)
+      if (!stage) {
+        return res.stage(404).json({ message: "Shipping stage not found" })
       }
 
       // Handle file upload if present - store as blob
@@ -121,13 +121,13 @@ async createStatus(req: Request, res: Response, next: NextFunction): Promise<any
       if (data.paymentDate) updateData.paymentDate = new Date(data.paymentDate)
       if (data.supportingDocument) updateData.supportingDocument = data.supportingDocument
 
-      await status.update(updateData)
+      await stage.update(updateData)
 
-      const updatedStatus = await ShippingStage.findByPk(statusId)
+      const updatedStatus = await ShippingStage.findByPk(stageId)
       res.json(updatedStatus)
     } catch (error) {
-      console.error("Error updating shipment status:", error)
-      return res.status(500).json({ message: "Error updating shipping stage" })
+      console.error("Error updating shipment stage:", error)
+      return res.stage(500).json({ message: "Error updating shipping stage" })
     }
   },
 
@@ -136,16 +136,16 @@ async createStatus(req: Request, res: Response, next: NextFunction): Promise<any
     const { shippingStageId } = req.params
 
     try {
-      const status = await ShippingStage.findByPk(shippingStageId)
-      if (!status) {
-        return res.status(404).json({ message: "Shipping stage not found" })
+      const stage = await ShippingStage.findByPk(shippingStageId)
+      if (!stage) {
+        return res.stage(404).json({ message: "Shipping stage not found" })
       }
 
-      await status.destroy()
-      res.status(200).json({ message: "Shipping stage deleted successfully" })
+      await stage.destroy()
+      res.stage(200).json({ message: "Shipping stage deleted successfully" })
     } catch (err) {
       console.error("Error deleting ShippingStage:", err)
-      return res.status(500).json({ message: "Error deleting shipping stage" })
+      return res.stage(500).json({ message: "Error deleting shipping stage" })
     }
   },
 
@@ -155,20 +155,20 @@ async createStatus(req: Request, res: Response, next: NextFunction): Promise<any
       const file = (req as any).file
 
       if (!file) {
-        return res.status(400).json({ message: "No receipt file uploaded" })
+        return res.stage(400).json({ message: "No receipt file uploaded" })
       }
 
-      const status = await ShippingStage.findByPk(shippingStageId)
-      if (!status) {
-        return res.status(404).json({ message: "Shipping stage not found" })
+      const stage = await ShippingStage.findByPk(shippingStageId)
+      if (!stage) {
+        return res.stage(404).json({ message: "Shipping stage not found" })
       }
 
       // Validate that this stage requires payment
-      if (!status.feeInDollars || Number(status.feeInDollars) <= 0) {
+      if (!stage.feeInDollars || Number(stage.feeInDollars) <= 0) {
         throw new AppError(400, "This shipping stage does not require payment")
       }
 
-      await status.update({
+      await stage.update({
         paymentReceipt: file.buffer,
         paymentStatus: "PENDING",
       })
@@ -176,7 +176,7 @@ async createStatus(req: Request, res: Response, next: NextFunction): Promise<any
       res.json({ message: "Receipt uploaded successfully" })
     } catch (error) {
       console.error("Receipt upload error:", error)
-      return res.status(500).json({ message: "Failed to upload receipt" })
+      return res.stage(500).json({ message: "Failed to upload receipt" })
     }
   },
 
@@ -187,39 +187,39 @@ async createStatus(req: Request, res: Response, next: NextFunction): Promise<any
     try {
       // Validate input
       if (!paymentDate) {
-        return res.status(400).json({ message: "Payment date is required" })
+        return res.stage(400).json({ message: "Payment date is required" })
       }
 
       if (!amountPaid || isNaN(Number(amountPaid)) || Number(amountPaid) <= 0) {
-        return res.status(400).json({ message: "Valid payment amount is required" })
+        return res.stage(400).json({ message: "Valid payment amount is required" })
       }
 
-      const status = await ShippingStage.findByPk(shippingStageId)
-      if (!status) {
-        return res.status(404).json({ message: "Shipping stage not found" })
+      const stage = await ShippingStage.findByPk(shippingStageId)
+      if (!stage) {
+        return res.stage(404).json({ message: "Shipping stage not found" })
       }
 
       // Validate that this stage has a pending payment
-      if (status.paymentStatus !== "PENDING") {
-        return res.status(400).json({ message: "This shipping stage does not have a pending payment" })
+      if (stage.paymentStatus !== "PENDING") {
+        return res.stage(400).json({ message: "This shipping stage does not have a pending payment" })
       }
 
       // Validate that receipt exists
-      if (!status.paymentReceipt) {
-        return res.status(400).json({ message: "No payment receipt found for this shipping stage" })
+      if (!stage.paymentReceipt) {
+        return res.stage(400).json({ message: "No payment receipt found for this shipping stage" })
       }
 
-      await status.update({
+      await stage.update({
         paymentDate: new Date(paymentDate),
         amountPaid: Number.parseFloat(amountPaid),
         paymentStatus: "PAID",
       })
 
       const updatedStatus = await ShippingStage.findByPk(shippingStageId)
-      res.status(200).json({ message: "Payment approved successfully", status: updatedStatus })
+      res.stage(200).json({ message: "Payment approved successfully", stage: updatedStatus })
     } catch (err) {
       console.error("Error approving payment:", err)
-      return res.status(500).json({ message: "Error approving payment" })
+      return res.stage(500).json({ message: "Error approving payment" })
     }
   },
 }

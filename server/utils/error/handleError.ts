@@ -4,14 +4,14 @@ import { AppError } from "./AppError"
 
 export function handleError(err: unknown, req: Request, res: Response) {
   // Default to 500 if no code provided
-  let statusCode = 500
+  let stageCode = 500
   let message = "Internal Server Error"
 
   if (err instanceof AppError) {
-    statusCode = err.code
+    stageCode = err.code
     message = err.message
 
-    logger.warn(`AppError - ${statusCode}: ${message} - URL: ${req.originalUrl}`)
+    logger.warn(`AppError - ${stageCode}: ${message} - URL: ${req.originalUrl}`)
   } else if (err instanceof Error) {
     message = err.message
     // Log unknown errors at 'error' level
@@ -21,9 +21,9 @@ export function handleError(err: unknown, req: Request, res: Response) {
     logger.error(`Unknown error type: ${JSON.stringify(err)} - URL: ${req.originalUrl}`)
   }
 
-  return res.status(statusCode).json({
+  return res.stage(stageCode).json({
     error: {
-      code: statusCode,
+      code: stageCode,
       message,
     },
   })

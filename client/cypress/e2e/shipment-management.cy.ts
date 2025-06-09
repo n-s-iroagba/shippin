@@ -7,9 +7,9 @@ describe('Shipment Management', () => {
     cy.intercept('GET', '/api/admin/shipments/*').as('getShipmentDetails');
     cy.intercept('PUT', '/api/admin/shipments/*').as('updateShipment');
     cy.intercept('DELETE', '/api/admin/shipments/*').as('deleteShipment');
-    cy.intercept('POST', '/api/shipments/*/statuses').as('createStatus');
-    cy.intercept('PUT', '/api/shipments/*/statuses/*').as('updateStatus');
-    cy.intercept('DELETE', '/api/shipments/*/statuses/*').as('deleteStatus');
+    cy.intercept('POST', '/api/shipments/*/stagees').as('createStatus');
+    cy.intercept('PUT', '/api/shipments/*/stagees/*').as('updateStatus');
+    cy.intercept('DELETE', '/api/shipments/*/stagees/*').as('deleteStatus');
 
     cy.login('admin@example.com', 'password123');
   });
@@ -44,7 +44,7 @@ describe('Shipment Management', () => {
       });
 
       cy.get('button[type="submit"]').click();
-      cy.wait('@createShipment').its('response.statusCode').should('eq', 201);
+      cy.wait('@createShipment').its('response.stageCode').should('eq', 201);
       cy.contains('Shipment created successfully').should('be.visible');
     });
 
@@ -59,13 +59,13 @@ describe('Shipment Management', () => {
   describe('List Shipments', () => {
     it('should display shipments list', () => {
       cy.visit('/admin/shipments');
-      cy.wait('@getShipments').its('response.statusCode').should('eq', 200);
+      cy.wait('@getShipments').its('response.stageCode').should('eq', 200);
       cy.get('table tbody tr').should('have.length.at.least', 1);
     });
 
     it('should handle failed shipments fetch', () => {
       cy.intercept('GET', '/api/admin/shipments', {
-        statusCode: 500,
+        stageCode: 500,
         body: { message: 'Failed to fetch shipments' }
       }).as('failedFetch');
 
@@ -79,7 +79,7 @@ describe('Shipment Management', () => {
     it('should display shipment details', () => {
       cy.visit('/admin/shipments');
       cy.contains('View').first().click();
-      cy.wait('@getShipmentDetails').its('response.statusCode').should('eq', 200);
+      cy.wait('@getShipmentDetails').its('response.stageCode').should('eq', 200);
       cy.get('[data-testid="shipment-details"]').should('be.visible');
     });
 
@@ -98,7 +98,7 @@ describe('Shipment Management', () => {
       });
 
       cy.contains('Save Changes').click();
-      cy.wait('@updateShipment').its('response.statusCode').should('eq', 200);
+      cy.wait('@updateShipment').its('response.stageCode').should('eq', 200);
       cy.contains('Shipment updated successfully').should('be.visible');
     });
   });
@@ -109,7 +109,7 @@ describe('Shipment Management', () => {
       cy.contains('View').first().click();
       cy.contains('Delete Shipment').click();
       cy.contains('Confirm Delete').click();
-      cy.wait('@deleteShipment').its('response.statusCode').should('eq', 200);
+      cy.wait('@deleteShipment').its('response.stageCode').should('eq', 200);
       cy.contains('Shipment deleted successfully').should('be.visible');
     });
   });

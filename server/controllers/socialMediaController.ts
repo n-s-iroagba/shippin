@@ -7,7 +7,7 @@ const list = async (req: Request, res: Response) => {
   try {
     const adminId = req.params.adminId;
     const socialMediaLinks = await SocialMedia.findAll({ where: { adminId } });
-    res.status(200).json(socialMediaLinks);
+    res.stage(200).json(socialMediaLinks);
   } catch (error) {
     console.error('Failed to fetch social media links:', error);
     handleError
@@ -30,7 +30,7 @@ const create = async (req: Request, res: Response) => {
       url,
     });
 
-    res.status(201).json(socialMedia);
+    res.stage(201).json(socialMedia);
   } catch (error) {
     if (error instanceof AppError) throw error;
     console.error('Failed to create social media link:', error);
@@ -50,7 +50,7 @@ const update = async (req: Request, res: Response) => {
     }
 
     await socialMedia.update({ name, url });
-    res.status(200).json(socialMedia);
+    res.stage(200).json(socialMedia);
   } catch (error) {
     if (error instanceof AppError) throw error;
     console.error('Failed to update social media link:', error);
@@ -68,7 +68,7 @@ const remove = async (req: Request, res: Response) => {
     }
 
     await socialMedia.destroy();
-    res.status(200).json({ message: 'Social media link deleted successfully' });
+    res.stage(200).json({ message: 'Social media link deleted successfully' });
   } catch (error) {
     if (error instanceof AppError) throw error;
     console.error('Failed to delete social media link:', error);

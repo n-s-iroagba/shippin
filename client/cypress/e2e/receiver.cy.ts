@@ -105,7 +105,7 @@ describe('Receiver Journey', () => {
     cy.get('.stage-item').first().within(() => {
       cy.get('[data-testid="stage-date"]').should('be.visible');
       cy.get('[data-testid="stage-tag"]').should('be.visible');
-      cy.get('[data-testid="stage-status"]').should('be.visible');
+      cy.get('[data-testid="stage-stage"]').should('be.visible');
     });
   });
 });

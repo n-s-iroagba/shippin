@@ -1,4 +1,4 @@
-// @/components/AdminShippingStageCard.tsx
+// @/components/PendingPaymentCard.tsx
 'use client';
 
 import { ShippingStage } from '@/types/shippingStage';
@@ -14,26 +14,26 @@ import {
   XCircleIcon
 } from '@heroicons/react/24/outline';
 
-interface AdminShippingStageCardProps {
+interface PendingPaymentCardProps {
   shippingStage: ShippingStage;
   onViewDocument: (stage: ShippingStage, type: 'supportingDocument' | 'paymentReceipt') => void;
   onApprovePayment: (stage: ShippingStage) => void;
 }
 
-export default function AdminShippingStageCard({
+export default function PendingPaymentCard({
   shippingStage,
   onViewDocument,
   onApprovePayment,
-}: AdminShippingStageCardProps) {
-  const getPaymentStatusBadge = (status: string) => {
-    const statusConfig = {
+}: PendingPaymentCardProps) {
+  const getPaymentStatusBadge = (stage: string) => {
+    const stageConfig = {
       'NO_PAYMENT_REQUIRED': { color: 'bg-gray-100 text-gray-700', icon: CheckCircleIcon, text: 'No Payment Required' },
       'UNPAID': { color: 'bg-red-100 text-red-700', icon: XCircleIcon, text: 'Unpaid' },
       'PENDING': { color: 'bg-yellow-100 text-yellow-700', icon: ClockIcon, text: 'Pending' },
       'PAID': { color: 'bg-green-100 text-green-700', icon: CheckCircleIcon, text: 'Paid' },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig];
+    const config = stageConfig[stage as keyof typeof stageConfig];
     const Icon = config.icon;
 
     return (

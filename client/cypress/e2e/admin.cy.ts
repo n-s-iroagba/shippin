@@ -94,7 +94,7 @@ describe('Admin Journeys', () => {
     // Add payment required stage
     cy.contains('Add Stage').click();
     cy.get('input[name="stageName"]').type('Customs Clearance');
-    cy.get('select[name="status"]').select('Payment Needed');
+    cy.get('select[name="stage"]').select('Payment Needed');
     cy.get('select[name="typeTag"]').select('Hold for Payment');
     cy.get('input[name="requiresPayment"]').check();
     cy.get('input[name="paymentAmount"]').type('500');
@@ -108,7 +108,7 @@ describe('Admin Journeys', () => {
     // Add transit stage
     cy.contains('Add Stage').click();
     cy.get('input[name="stageName"]').type('Transit to Destination');
-    cy.get('select[name="status"]').select('Pending');
+    cy.get('select[name="stage"]').select('Pending');
     cy.get('select[name="typeTag"]').select('Transit');
     cy.get('textarea[name="notes"]').type('Package in transit');
     cy.get('button[type="submit"]').click();

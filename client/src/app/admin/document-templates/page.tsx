@@ -2,45 +2,40 @@
 import { useState } from 'react';
 import { DocumentTemplateAttributes } from '@/types/document-template.types';
 import DocumentTemplateForm from '@/components/DocumentTemplateForm';
-import AdminOffCanvas from '@/components/AdminOffCanvas';
-import { useGetList } from '@/hooks/useFetch';
 import AdminDocumentTemplateCard from '@/components/AdminDocumentTemplateCard';
 import { DeleteConfirmationModal } from '@/components/DeleteConfirmationModal';
 import { Spinner } from '@/components/Spinner';
-import ErrorComponent from '@/components/ErrorComponent';
+import ErrorAlert from '@/components/ErrorAlert';
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
+import { useGetList } from '@/hooks/useGet';
+import { routes } from '@/data/routes';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function DocumentTemplateCrudPage() {
-  const { data: templates, loading, error } = useGetList<DocumentTemplateAttributes>('document-templates');
+  const {id, displayName} = useAuth()
+  const { data: templates, loading, error } = useGetList<DocumentTemplateAttributes>(routes.templates.list(id));
   const [createTemplate, setCreateTemplate] = useState(false);
   const [templateToDelete, setTemplateToDelete] = useState<DocumentTemplateAttributes | null>(null);
   const [templateToUpdate, setTemplateToUpdate] = useState<DocumentTemplateAttributes | null>(null);
 
   if (loading) {
     return (
-      <AdminOffCanvas>
-        <div className="flex justify-center py-12">
           <Spinner className="w-10 h-10 text-blue-600" />
-        </div>
-      </AdminOffCanvas>
     );
   }
 
   if (error) {
     return (
-      <AdminOffCanvas>
-        <ErrorComponent message={error || "Failed to load document templates"} />
-      </AdminOffCanvas>
+        <ErrorAlert message={error || "Failed to load document templates"} />
     );
   }
 
   return (
     <>
-      <AdminOffCanvas>
         <div className="container mx-auto p-4 bg-blue-50 min-h-screen">
           <div className="max-w-6xl mx-auto">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
-              <h1 className="text-2xl sm:text-3xl font-bold text-blue-900">Document Templates</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-blue-900">{displayName}&apos;s Document Templates</h1>
               <button
                 name='addNewTemplate'
                 onClick={() => setCreateTemplate(true)}
@@ -99,7 +94,7 @@ export default function DocumentTemplateCrudPage() {
             )}
           </div>
         </div>
-      </AdminOffCanvas>
+    
     </>
   );
 }

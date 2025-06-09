@@ -67,7 +67,7 @@ export default function AboutPage() {
         <div className="container mx-auto px-4 py-16">
           <div className="max-w-4xl mx-auto text-center text-white">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              About GlobalShip
+              About Netly Logistics
             </h1>
             <p className="text-xl md:text-2xl text-blue-100 mb-8">
               Connecting the world through reliable, secure, and efficient shipping solutions

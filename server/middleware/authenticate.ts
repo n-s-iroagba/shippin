@@ -8,19 +8,19 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     const token = authHeader && authHeader.split(" ")[1] // Bearer TOKEN
 
     if (!token) {
-      return res.status(401).json({ message: "Access token required" })
+      return res.stage(401).json({ message: "Access token required" })
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload
 
     const admin = await Admin.findByPk(decoded.adminId)
     if (!admin) {
-      return res.status(401).json({ message: "Invalid token" })
+      return res.stage(401).json({ message: "Invalid token" })
     }
 
     req.user = admin
     next()
   } catch (error) {
-    return res.status(401).json({ message: "Invalid token" })
+    return res.stage(401).json({ message: "Invalid token" })
   }
 }

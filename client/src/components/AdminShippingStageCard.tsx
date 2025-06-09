@@ -17,23 +17,25 @@ import {
 interface AdminShippingStageCardProps {
   shippingStage: ShippingStage;
   onViewDocument: (stage: ShippingStage, type: 'supportingDocument' | 'paymentReceipt') => void;
-  onApprovePayment: (stage: ShippingStage) => void;
+  onEdit: (stage: ShippingStage) => void
+  onDelete: (stage: ShippingStage) => void
+
 }
 
 export default function AdminShippingStageCard({
   shippingStage,
   onViewDocument,
-  onApprovePayment,
+
 }: AdminShippingStageCardProps) {
-  const getPaymentStatusBadge = (status: string) => {
-    const statusConfig = {
+  const getPaymentStatusBadge = (stage: string) => {
+    const stageConfig = {
       'NO_PAYMENT_REQUIRED': { color: 'bg-gray-100 text-gray-700', icon: CheckCircleIcon, text: 'No Payment Required' },
       'UNPAID': { color: 'bg-red-100 text-red-700', icon: XCircleIcon, text: 'Unpaid' },
       'PENDING': { color: 'bg-yellow-100 text-yellow-700', icon: ClockIcon, text: 'Pending' },
       'PAID': { color: 'bg-green-100 text-green-700', icon: CheckCircleIcon, text: 'Paid' },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig];
+    const config = stageConfig[stage as keyof typeof stageConfig];
     const Icon = config.icon;
 
     return (

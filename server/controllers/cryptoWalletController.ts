@@ -30,7 +30,7 @@ export const cryptoWalletController = {
         label
       });
 
-      res.status(201).json(wallet);
+      res.stage(201).json(wallet);
     } catch (error) {
       console.error('Failed to create crypto wallet:', error);
       if (error instanceof AppError) throw error;

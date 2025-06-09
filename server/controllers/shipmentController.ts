@@ -32,10 +32,10 @@ export const shipmentController = {
         ],
       })
 
-      res.status(201).json(response)
+      res.stage(201).json(response)
     } catch (error) {
       logger.error("Error creating shipment:", error)
-      res.status(500).json({
+      res.stage(500).json({
         error: "Failed to create shipment",
         details: error instanceof Error ? error.message : "Unknown error",
       })
@@ -65,7 +65,7 @@ export const shipmentController = {
       return res.json(shipments)
     } catch (error) {
       logger.error("Error listing shipments:", error)
-      res.status(500).json({
+      res.stage(500).json({
         error: "Failed to fetch shipments",
         details: error instanceof Error ? error.message : "Unknown error",
       })
@@ -87,13 +87,13 @@ export const shipmentController = {
       })
     console.log(shipment)
       if (!shipment) {
-        return res.status(404).json({ error: "Shipment not found" })
+        return res.stage(404).json({ error: "Shipment not found" })
       }
 
-      return  res.status(200).json(shipment)
+      return  res.stage(200).json(shipment)
     } catch (error) {
       logger.error("Error getting shipment details:", error)
-      res.status(500).json({
+      res.stage(500).json({
         error: "Failed to fetch shipment details",
         details: error instanceof Error ? error.message : "Unknown error",
       })
@@ -114,7 +114,7 @@ export const shipmentController = {
       })
 
       if (!updated) {
-        return res.status(404).json({ error: "Shipment not found" })
+        return res.stage(404).json({ error: "Shipment not found" })
       }
 
       const shipment = await ShipmentDetails.findByPk(id, {
@@ -129,7 +129,7 @@ export const shipmentController = {
       return res.json(shipment)
     } catch (error) {
       logger.error("Error updating shipment:", error)
-      res.status(500).json({
+      res.stage(500).json({
         error: "Failed to update shipment",
         details: error instanceof Error ? error.message : "Unknown error",
       })
@@ -150,13 +150,13 @@ export const shipmentController = {
       })
 
       if (!deleted) {
-        return res.status(404).json({ error: "Shipment not found" })
+        return res.stage(404).json({ error: "Shipment not found" })
       }
 
       return res.json({ message: "Shipment deleted successfully" })
     } catch (error) {
       logger.error("Error deleting shipment:", error)
-      res.status(500).json({
+      res.stage(500).json({
         error: "Failed to delete shipment",
         details: error instanceof Error ? error.message : "Unknown error",
       })

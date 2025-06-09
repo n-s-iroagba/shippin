@@ -69,6 +69,7 @@ export default function SignUpPage() {
       // Show unavailable message after "submission"
       setShowUnavailableMessage(true);
     } catch (err) {
+      console.error(err);
       setErrors({ submit: 'An error occurred. Please try again.' });
     }
     
@@ -95,13 +96,13 @@ export default function SignUpPage() {
             </h2>
             <p className="text-gray-700 mb-6 leading-relaxed">
               Thank you for your interest in GlobalShip! Unfortunately, our shipping services 
-              are temporarily unavailable in your location. We're working hard to expand our 
+              are temporarily unavailable in your location. We&apos;re working hard to expand our 
               coverage and hope to serve you soon.
             </p>
             <div className="bg-blue-50 p-4 rounded-lg mb-6">
               <p className="text-sm text-blue-700">
-                <strong>What's next?</strong><br />
-                We'll notify you as soon as service becomes available in your area. 
+                <strong>What&apos;s next?</strong><br />
+                We&apos;ll notify you as soon as service becomes available in your area. 
                 Keep an eye on your email for updates!
               </p>
             </div>

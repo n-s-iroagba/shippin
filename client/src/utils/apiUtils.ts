@@ -18,19 +18,19 @@ export const protectedApi = {
       headers: getAuthHeaders(),
     });
     
-    console.log('Response status:', response.status);
+    console.log('Response stage:', response.stage);
     console.log('Response ok:', response.ok);
     
     if (!response.ok) {
-      console.log('Response not ok, status:', response.status);
+      console.log('Response not ok, stage:', response.stage);
       let errorMessage = "Request failed";
       try {
         const errorData = await response.json();
         console.log('Error data:', errorData);
-        errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+        errorMessage = errorData.message || `HTTP ${response.stage}: ${response.stageText}`;
       } catch (e) {
         console.log('Failed to parse error JSON:', e);
-        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        errorMessage = `HTTP ${response.stage}: ${response.stageText}`;
       }
       throw new Error(errorMessage);
     }
@@ -68,17 +68,17 @@ export const protectedApi = {
       body: isFormData ? data : JSON.stringify(data),
     });
     
-    console.log('Response status:', response.status);
+    console.log('Response stage:', response.stage);
     
     if (!response.ok) {
       let errorMessage = "Request failed";
       try {
         const errorData = await response.json();
         console.log('Error data:', errorData);
-        errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+        errorMessage = errorData.message || `HTTP ${response.stage}: ${response.stageText}`;
       } catch (e) {
         console.log('Failed to parse error JSON:', e);
-        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        errorMessage = `HTTP ${response.stage}: ${response.stageText}`;
       }
       throw new Error(errorMessage);
     }
@@ -98,17 +98,17 @@ export const protectedApi = {
       body: isFormData ? data : JSON.stringify(data),
     });
     
-    console.log('Response status:', response.status);
+    console.log('Response stage:', response.stage);
     
     if (!response.ok) {
       let errorMessage = "Request failed";
       try {
         const errorData = await response.json();
         console.log('Error data:', errorData);
-        errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+        errorMessage = errorData.message || `HTTP ${response.stage}: ${response.stageText}`;
       } catch (e) {
         console.log('Failed to parse error JSON:', e);
-        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        errorMessage = `HTTP ${response.stage}: ${response.stageText}`;
       }
       throw new Error(errorMessage);
     }
@@ -124,17 +124,17 @@ export const protectedApi = {
       headers: getAuthHeaders(),
     });
     
-    console.log('Response status:', response.status);
+    console.log('Response stage:', response.stage);
     
     if (!response.ok) {
       let errorMessage = "Request failed";
       try {
         const errorData = await response.json();
         console.log('Error data:', errorData);
-        errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+        errorMessage = errorData.message || `HTTP ${response.stage}: ${response.stageText}`;
       } catch (e) {
         console.log('Failed to parse error JSON:', e);
-        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        errorMessage = `HTTP ${response.stage}: ${response.stageText}`;
       }
       throw new Error(errorMessage);
     }

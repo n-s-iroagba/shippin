@@ -1,15 +1,17 @@
 'use client'
 
 import { useState } from 'react';
-import { SocialMedia } from '@/types/socialMedia';
-import SocialMediaForm from '@/components/SocialMediaForm';
-import AdminOffCanvas from '@/components/AdminOffCanvas';
-import { useGetList } from '@/hooks/useFetch';
-import AdminSocialMediaCard from '@/components/AdminSocialMediaCard';
+
+
 import { DeleteConfirmationModal } from '@/components/DeleteConfirmationModal';
 import { Spinner } from '@/components/Spinner';
-import ErrorComponent from '@/components/ErrorComponent';
+import ErrorAlert from '@/components/ErrorAlert';
 import { LinkIcon } from '@heroicons/react/24/outline';
+
+import { useGetList } from '@/hooks/useGet';
+import { SocialMedia } from '@/types/social-media.types';
+import { AdminSocialMediaCard } from '@/components/AdminSocialMediaCard';
+import AdminSocialMediaForm from '@/components/AdminSocialMediaForm';
 
 export default function SocialMediaCrudPage() {
   const { data: socialMedia, loading, error } = useGetList<SocialMedia>('social-media');
@@ -19,25 +21,25 @@ export default function SocialMediaCrudPage() {
 
   if (loading) {
     return (
-      <AdminOffCanvas>
-        <div className="flex justify-center py-12">
+      
+     
           <Spinner className="w-10 h-10 text-blue-600" />
-        </div>
-      </AdminOffCanvas>
+        
+    
     );
   }
 
   if (error) {
     return (
-      <AdminOffCanvas>
-        <ErrorComponent message={error || "Failed to load social media links"} />
-      </AdminOffCanvas>
+      
+        <ErrorAlert message={error || "Failed to load social media links"} />
+    
     );
   }
 
   return (
     <>
-      <AdminOffCanvas>
+      
         <div className="container mx-auto p-4 bg-blue-50 min-h-screen">
           <div className="max-w-6xl mx-auto">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
@@ -52,11 +54,11 @@ export default function SocialMediaCrudPage() {
             </div>
 
             {createSocialMedia && (
-              <SocialMediaForm />
+              <AdminSocialMediaForm />
             )}
 
             {socialMediaToUpdate && (
-              <SocialMediaForm
+              <AdminSocialMediaForm
                 existingSocialMedia={socialMediaToUpdate}
                 patch
               />
@@ -77,12 +79,8 @@ export default function SocialMediaCrudPage() {
                 {socialMedia.map((sm) => (
                   <AdminSocialMediaCard
                     key={sm.id}
-                    socialMedia={sm}
-                    onEdit={() => {
-                      setSocialMediaToUpdate(sm);
-                    }}
-                    onDelete={() => setSocialMediaToDelete(sm)}
-                  />
+                    onEdit={setSocialMediaToUpdate}
+                    onDelete={setSocialMediaToDelete} socialMedia={sm}                  />
                 ))}
               </div>
             )}
@@ -97,7 +95,7 @@ export default function SocialMediaCrudPage() {
             )}
           </div>
         </div>
-      </AdminOffCanvas>
+    
     </>
   );
 }

@@ -33,7 +33,7 @@ export interface CreateShipmentDto {
 }
 
 export interface ShippingStage {
-  id: string
+  id: number
   title: string
   location: string
   carrierNote: string

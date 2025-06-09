@@ -5,10 +5,11 @@ import { useGetList } from "@/hooks/useGet"
 import { useRouter } from "next/navigation"
 import { ShippingStage } from '@/types/shipment.types';
 import TodoAlert from "@/components/TodoAlert"
-import { ReactNode } from "react"
+import { ReactNode, useEffect } from "react"
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline"
 import { Spinner } from "@/components/Spinner"
 import { CryptoWallet } from "@/types/crypto-wallet.types"
+import { SocialMedia } from "@/types/social-media.types"
 
 
 const Todo= () => {
@@ -22,7 +23,7 @@ const Todo= () => {
     loading: walletLoading,
   } = useGetList<CryptoWallet>(routes.cryptoWallet.list(adminId))
 
-  const { data: payments, error: paymentError, loading: paymentLoading } = useGetList<ShippingStage>(routes.shippingStages.unapprovedPayment())
+  const { data: payments, error: paymentError, loading: paymentLoading } = useGetList<ShippingStage>(routes.stage.unapprovedPayments(adminId))
   const {
     data: socialmedias,
     error: socialMediaError,
@@ -54,7 +55,7 @@ useEffect(() => {
       <TodoAlert
         key="wallet-alert"
         message="You do not have any wallets, add wallets to start managing transactions"
-        link="/admin/crypto=wallets"
+        link="/admin/crypto-wallets"
       />,
     )
   }

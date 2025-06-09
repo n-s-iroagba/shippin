@@ -77,7 +77,7 @@ const ShipmentTrackingDashboard: React.FC = () => {
     formData.append("paymentReceipt", file)
 
     try {
-      const response = await fetch(`${SERVER_URL}/statuses/${uploadModalStat.id}/upload-receipt`, {
+      const response = await fetch(`${SERVER_URL}/stagees/${uploadModalStat.id}/upload-receipt`, {
         method: "POST",
         body: formData,
       })
