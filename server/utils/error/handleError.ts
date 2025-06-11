@@ -1,32 +1,47 @@
-import type { Request, Response } from "express"
+import { Response } from "express"
+import {
+  DatabaseError,
+  ForeignKeyConstraintError,
+} from "sequelize"
+import { AppError,  ValidationError} from "./AppError"
+import ApiResponse from "../../type/ApiResponse"
 import logger from "../logger"
-import { AppError } from "./AppError"
 
-export function handleError(err: unknown, req: Request, res: Response) {
-  // Default to 500 if no code provided
-  let stageCode = 500
-  let message = "Internal Server Error"
+export const handleError = (
+  error: any,
+  context:string,
+  res?: Response
+): void => {
+  logger.error(`[${context}] ${error?.message || error}`)
 
-  if (err instanceof AppError) {
-    stageCode = err.code
-    message = err.message
+  let statusCode = 500
+  let message = "An unexpected error occurred"
+  let errors: string[] | undefined = undefined
 
-    logger.warn(`AppError - ${stageCode}: ${message} - URL: ${req.originalUrl}`)
-  } else if (err instanceof Error) {
-    message = err.message
-    // Log unknown errors at 'error' level
-    logger.error(`Error: ${message} - URL: ${req.originalUrl} - Stack: ${err.stack}`)
-  } else {
-    // If err is something else (string, object, etc)
-    logger.error(`Unknown error type: ${JSON.stringify(err)} - URL: ${req.originalUrl}`)
+  if (error instanceof AppError) {
+    statusCode = error.code
+    message = error.message
+   
+  } else if (error instanceof ValidationError) {
+    statusCode = 400
+    message = "Validation error"
+    errors = error.errors.map((e) => e.message)
+  } else if (error instanceof ForeignKeyConstraintError) {
+    statusCode = 400
+    message = "Foreign key constraint error"
+  } else if (error instanceof DatabaseError) {
+    statusCode = 500
+    message = "Database error"
   }
 
-  return res.stage(stageCode).json({
-    error: {
-      code: stageCode,
-      message,
-    },
-  })
-}
+  const response: ApiResponse<any> = {
+    success: false,
+    message,
+    data:errors,
+  }
 
-export { AppError } from "./AppError.js"
+  // Only send response if res object is available
+  if (res) {
+    res.status(statusCode).json(response)
+  }
+}

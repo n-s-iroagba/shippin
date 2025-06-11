@@ -14,7 +14,7 @@ import {
 } from "./controllers/authController"
 
 import { uploadDocument, uploadPayment, uploadTemplate, uploadSupportingDoc } from "./middleware/upload"
-import shippingStageController from "./controllers/ShippingStageController"
+import StageController from "./controllers/StageController"
 import { socialMediaController } from "./controllers/socialMediaController"
 import { authenticate } from "./middleware/authenticate"
 import { cryptoWalletController } from "./controllers/cryptoWalletController"
@@ -24,19 +24,19 @@ const upload = multer({ dest: "uploads/" })
 
 router.post("/admin/shipment/:adminId", shipmentController.createShipment)
 router.get("/admin/shipment/:adminId", shipmentController.listShipments)
-router.get("/admin/shipmentdetails/:id", shipmentController.getShipmentDetails)
+router.get("/admin/shipmentdetails/:id", shipmentController.getShipment)
 router.patch("/admin/shipment-details/:id", shipmentController.updateShipment)
 router.delete("/admin/shipment-details/:id", shipmentController.deleteShipment)
 router.get("/track/shipment/:trackingId", shipmentController.trackShipment)
 
-router.post("/admin/stage/:shipmentId",uploadDocument.single("supportingDocument"),shippingStageController.createstage)
-router.patch("/admin/stage/:stageId",uploadDocument.single("supportingDocument"),shippingStageController.updatestage)
-router.get("//admin/stage/unapproved-payments/:adminId",shippingStageController.liststageWithUnApprovedPayment)
-router.delete("/admin/stage/:stageId", shippingStageController.deleteShippingStage)
-router.post("/stages/:shippingStageId/approve-payment", shippingStageController.approvePayment)
-router.post("/stages/:shippingStageId/upload-receipt", uploadPayment.single('paymentReceipt'), shippingStageController.uploadReceipt)
-router.post("/shipping-stages/:shipmentId",uploadSupportingDoc.single("supportingDocument"),shippingStageController.createstage)
-router.patch("/shipping-stages/:stageId",uploadSupportingDoc.single("supportingDocument"),shippingStageController.updatestage)
+router.post("/admin/stage/:shipmentId",uploadDocument.single("supportingDocument"),StageController.createstage)
+router.patch("/admin/stage/:stageId",uploadDocument.single("supportingDocument"),StageController.updatestage)
+router.get("//admin/stage/unapproved-payments/:adminId",StageController.liststageWithUnApprovedPayment)
+router.delete("/admin/stage/:stageId", StageController.deleteStage)
+router.post("/stages/:StageId/approve-payment", StageController.approvePayment)
+router.post("/stages/:StageId/upload-receipt", uploadPayment.single('paymentReceipt'), StageController.uploadReceipt)
+router.post("/shipping-stages/:shipmentId",uploadSupportingDoc.single("supportingDocument"),StageController.createstage)
+router.patch("/shipping-stages/:stageId",uploadSupportingDoc.single("supportingDocument"),StageController.updatestage)
 
 router.post("/admin/signup", signUp)
 router.post("/admin/login", login)

@@ -3,7 +3,7 @@ import { routes } from "@/data/routes"
 import { useAuth } from "@/hooks/useAuth"
 import { useGetList } from "@/hooks/useGet"
 import { useRouter } from "next/navigation"
-import { ShippingStage } from '@/types/shipment.types';
+import { Stage } from '@/types/shipment.types';
 import TodoAlert from "@/components/TodoAlert"
 import { ReactNode, useEffect } from "react"
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline"
@@ -23,7 +23,7 @@ const Todo= () => {
     loading: walletLoading,
   } = useGetList<CryptoWallet>(routes.cryptoWallet.list(adminId))
 
-  const { data: payments, error: paymentError, loading: paymentLoading } = useGetList<ShippingStage>(routes.stage.unapprovedPayments(adminId))
+  const { data: payments, error: paymentError, loading: paymentLoading } = useGetList<Stage>(routes.stage.unapprovedPayments(adminId))
   const {
     data: socialmedias,
     error: socialMediaError,

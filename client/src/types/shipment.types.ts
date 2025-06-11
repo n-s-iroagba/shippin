@@ -1,73 +1,30 @@
-export interface ShipmentDetails {
+
+export type FreightType= 'RECEIVED (WAREHOUSE)'|'ONBOARD'|'IN TRANSIT'
+export type ShipmentStatus = 'RECEIVED (WAREHOUSE)'|'ONBOARD'|'IN TRANSIT'
+export interface Shipment {
   id: number
   shipmentID: string
   adminId: number
   senderName: string
-  sendingPickupPoint: string
-  shippingTakeoffAddress: string
-  receivingAddress: string
+  codename: string
+  origin: string
+  destination: string
   recipientName: string
-  receipientEmail: string
-  shipmentDescription: string
   expectedTimeOfArrival: Date
-  freightType: "AIR" | "SEA" | "LAND"
-  weight: number
-  dimensionInInches: string
+  status: ShipmentStatus
+  freightType: FreightType
   createdAt: Date
   updatedAt: Date
-  ShippingStages: ShippingStage[]
 }
 
 export interface CreateShipmentDto {
   senderName: string
-  sendingPickupPoint: string
-  shippingTakeoffAddress: string
-  receivingAddress: string
+  codename: string
+  origin: string
+  destination: string
   recipientName: string
-  receipientEmail: string
-  shipmentDescription: string
   expectedTimeOfArrival: Date
-  freightType: "AIR" | "SEA" | "LAND"
-  weight: number
-  dimensionInInches: string
+  status: ShipmentStatus
+  freightType: FreightType
 }
-
-export interface ShippingStage {
-  id: number
-  title: string
-  location: string
-  carrierNote: string
-  dateAndTime: Date
-  percentageNote?: string
-  feeInDollars?: number 
-  paymentStatus: 'NO_PAYMENT_REQUIRED'|"UNPAID" | "PENDING" | "PAID"
-  amountPaid?: number
-  paymentDate?: Date
-  supportingDocument?: File | null |Buffer
-  paymentReceipt?:  File | null |Buffer
-  shipmentDetailsId: number
-     longitude: number
-  latitude: number
-  createdAt: Date
-  updatedAt: Date
-}
-
-export interface CreateShippingStage {
-
-  title: string
-  location: string
-  carrierNote: string
-  dateAndTime: Date
-   percentageNote?: string
-  feeInDollars?: number
-  paymentStatus: 'NO_PAYMENT_REQUIRED'|"UNPAID" | "PENDING" | "PAID"
-  amountPaid?: number
-  paymentDate?: Date
-  supportingDocument?: File | null
-  paymentReceipt?:  File | null
-   longitude: number
-  latitude: number
-
-}
-
 

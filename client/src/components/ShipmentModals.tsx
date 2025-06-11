@@ -1,5 +1,5 @@
 "use client"
-import { CreateShipmentDto, type ShipmentDetails } from "@/types/shipment.types"
+import { CreateShipmentDto, type Shipment } from "@/types/shipment.types"
 import type React from "react"
 import { useState } from "react"
 
@@ -9,7 +9,7 @@ const modalBoxStyle = "bg-white p-6 rounded-lg shadow-xl w-full max-w-md max-h-[
 
 export const CreateShipmentModal: React.FC<{
   onClose: () => void
-  onCreate: (shipment: ShipmentDetails) => void
+  onCreate: (shipment: Shipment) => void
 }> = ({ onClose, onCreate }) => {
   const [form, setForm] = useState<CreateShipmentDto>({
     senderName: "",
@@ -191,11 +191,11 @@ export const CreateShipmentModal: React.FC<{
 }
 
 export const EditShipmentModal: React.FC<{
-  shipment: ShipmentDetails
+  shipment: Shipment
   onClose: () => void
-  onUpdate: (updatedShipment: ShipmentDetails) => void
+  onUpdate: (updatedShipment: Shipment) => void
 }> = ({ shipment, onClose, onUpdate }) => {
-  const [form, setForm] = useState<ShipmentDetails>(shipment)
+  const [form, setForm] = useState<Shipment>(shipment)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -354,7 +354,7 @@ export const EditShipmentModal: React.FC<{
 }
 
 export const DeleteShipmentModal: React.FC<{
-  shipment: ShipmentDetails
+  shipment: Shipment
   onDelete: () => void
 }> = ({ shipment, onDelete }) => {
   const [deleting, setDeleting] = useState(false)

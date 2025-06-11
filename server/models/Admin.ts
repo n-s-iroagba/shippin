@@ -1,6 +1,6 @@
 import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../config/database";
-import { ShipmentDetails } from "./ShipmentDetails";
+import { Shipment } from "./Shipment";
 
 
 export class Admin extends Model {

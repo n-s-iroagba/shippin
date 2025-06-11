@@ -6,21 +6,21 @@ import { Spinner } from "@/components/Spinner";
 import ErrorAlert from "@/components/ErrorAlert";
 import { TruckIcon } from "@heroicons/react/24/outline";
 import { useGetList } from "@/hooks/useGet";
-import { ShippingStage } from "@/types/shipment.types";
+import { Stage } from "@/types/shipment.types";
 import PendingPaymentCard from "@/components/PendingPaymentCard";
 import { routes } from "@/data/routes";
 import { useAuth } from "@/hooks/useAuth";
 
-export default function ShippingStageCrudPage() {
+export default function StageCrudPage() {
   const {id} = useAuth()
   const {
-    data: shippingStages,
+    data: Stages,
     loading,
     error,
-  } = useGetList<ShippingStage>(routes.stage.unapprovedPayments(id));
+  } = useGetList<Stage>(routes.stage.unapprovedPayments(id));
   const [stageForDocument, setStageForDocument] =
-    useState<ShippingStage | null>(null);
-  const [stageForPayment, setStageForPayment] = useState<ShippingStage | null>(
+    useState<Stage | null>(null);
+  const [stageForPayment, setStageForPayment] = useState<Stage | null>(
     null
   );
   const [documentType, setDocumentType] = useState<
@@ -36,14 +36,14 @@ export default function ShippingStageCrudPage() {
   }
 
   const handleViewDocument = (
-    stage: ShippingStage,
+    stage: Stage,
     type: "supportingDocument" | "paymentReceipt"
   ) => {
     setStageForDocument(stage);
     setDocumentType(type);
   };
 
-  const handleApprovePayment = (stage: ShippingStage) => {
+  const handleApprovePayment = (stage: Stage) => {
     setStageForPayment(stage);
   };
 
@@ -60,7 +60,7 @@ export default function ShippingStageCrudPage() {
             </div>
           </div>
 
-          {!shippingStages || shippingStages.length === 0 ? (
+          {!Stages || Stages.length === 0 ? (
             <div className="bg-blue-50 p-8 rounded-2xl border-2 border-blue-100 text-center max-w-md mx-auto">
               <div className="flex justify-center mb-4">
                 <TruckIcon className="w-12 h-12 text-blue-600" />
@@ -74,10 +74,10 @@ export default function ShippingStageCrudPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              {shippingStages.map((stage) => (
+              {Stages.map((stage) => (
                 <PendingPaymentCard
                   key={stage.id}
-                  shippingStage={stage}
+                  Stage={stage}
                   onViewDocument={handleViewDocument}
                   onApprovePayment={handleApprovePayment}
                 />
@@ -101,7 +101,7 @@ export default function ShippingStageCrudPage() {
           {stageForPayment && (
             <PaymentApprovalModal
               onClose={() => setStageForPayment(null)}
-              shippingStage={stageForPayment}
+              Stage={stageForPayment}
             />
           )}
         </div>

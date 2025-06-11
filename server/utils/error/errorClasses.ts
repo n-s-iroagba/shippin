@@ -12,3 +12,19 @@ export class AppError extends Error {
       this.name = 'AppError';
     }
   }
+export class ValidationError extends Error {
+
+  public errors:ValidationErrorItem[]
+  
+    constructor(errors:ValidationErrorItem[],message:string) {
+   super(message)
+   this.errors = errors;
+   
+    }
+  }
+
+  export type ValidationErrorItem = {
+    field: string;
+    message: string;
+    value?:any
+  }

@@ -1,6 +1,6 @@
 
 import { routes } from "@/data/constants";
-import { ShippingStage, ShippingStageCreationDto } from "@/types/shipment.types";
+import { Stage, StageCreationDto } from "@/types/shipment.types";
 import { protectedApi } from "@/utils/apiUtils";
 import React, { useEffect, useState } from "react";
 
@@ -9,8 +9,8 @@ interface ModalProps {
   shipmentId: number;
 }
 
-export const AddShippingStageModal: React.FC<ModalProps> = ({ onClose, shipmentId }) => {
-  const [formData, setFormData] = useState<Omit<ShippingStageCreationDto, 'id' | 'paymentDate' | 'amountPaid' | 'paymentReceipt'>>({
+export const AddStageModal: React.FC<ModalProps> = ({ onClose, shipmentId }) => {
+  const [formData, setFormData] = useState<Omit<StageCreationDto, 'id' | 'paymentDate' | 'amountPaid' | 'paymentReceipt'>>({
     title: '',
     dateAndTime: new Date().toISOString().split('T')[0],
     carrierNote: '',
@@ -64,7 +64,7 @@ export const AddShippingStageModal: React.FC<ModalProps> = ({ onClose, shipmentI
       }
 
 
-      const response = await fetch(routes.shippingStage.create(shipmentId), {
+      const response = await fetch(routes.Stage.create(shipmentId), {
         method: 'POST',
         body: form,
       });
@@ -166,12 +166,12 @@ export const AddShippingStageModal: React.FC<ModalProps> = ({ onClose, shipmentI
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  initialData: ShippingStage;
+  initialData: Stage;
 
 }
 
-export const EditShippingStageModal: React.FC<Props> = ({ isOpen, onClose, initialData }) => {
-  const [formState, setFormState] = useState<ShippingStage>({ ...initialData, supportingDocument: null });
+export const EditStageModal: React.FC<Props> = ({ isOpen, onClose, initialData }) => {
+  const [formState, setFormState] = useState<Stage>({ ...initialData, supportingDocument: null });
 
   useEffect(() => {
     if (isOpen) {
@@ -202,7 +202,7 @@ export const EditShippingStageModal: React.FC<Props> = ({ isOpen, onClose, initi
     });
 
     try {
-      const response = await fetch(routes.shippingStage.update(initialData.id), {
+      const response = await fetch(routes.Stage.update(initialData.id), {
         method: 'PATCH',
         body: formData,
       });

@@ -4,16 +4,16 @@ import { Admin } from './Admin';
 
 export interface DocumentTemplateAttributes {
   id?: number;
-  adminId: ForeignKey<Admin['id']>;
+  adminId: number;
   name: string;
-  filePath: string;
+  file: Buffer
 }
 
 class DocumentTemplate extends Model<DocumentTemplateAttributes> implements DocumentTemplateAttributes {
   public id?: number;
-  public adminId!: ForeignKey<Admin['id']>;
+  public adminId!: number;
   public name!: string;
-  public filePath!: string;
+  public file!: Buffer;
 }
 
 DocumentTemplate.init(
@@ -35,8 +35,8 @@ DocumentTemplate.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    filePath: {
-      type: DataTypes.STRING,
+    file: {
+      type: DataTypes.BLOB('long'),
       allowNull: false,
     },
   },
@@ -45,6 +45,6 @@ DocumentTemplate.init(
     modelName: 'DocumentTemplate',
   }
 );
-Admin.hasMany(DocumentTemplate, { foreignKey: 'adminId' });
-DocumentTemplate.belongsTo(Admin, { foreignKey: 'adminId' });
+Admin.hasMany(DocumentTemplate, { foreignKey: 'adminId', as: 'documentTemplate' });
+DocumentTemplate.belongsTo(Admin, { foreignKey: 'adminId', as: 'admin' });
 export { DocumentTemplate };

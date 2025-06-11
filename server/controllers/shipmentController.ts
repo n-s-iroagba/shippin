@@ -1,219 +1,319 @@
-import type { Request, Response, NextFunction } from "express"
-import { ShipmentDetails } from "../models/ShipmentDetails"
-import { ShippingStage } from "../models/ShippingStage"
-import logger from "../utils/logger"
+import type { Request, Response } from "express"
+import { Stage } from "../models/Stage"
 import { Admin } from "../models/Admin"
-import { AppError } from "../utils/error/AppError"
+import { AppError } from "../utils/error/errorClasses"
+import logger from "../utils/logger"
+import Shipment from "../models/Shipment"
+import ApiResponse from "../dto/ApiResponse"
+import { handleError } from "../utils/error/handleError"
+import { validateShipmentCreationDto, validateShipmentUpdateData} from "../validation/shipment.validation"
+import { generateTrackingId } from "../utils/helpers"
+import { AuthRequest } from "../dto/AuthRequest"
+
 
 export const shipmentController = {
-  async createShipment(req: Request, res: Response, next: NextFunction):Promise<any> {
+  async createShipment(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const adminId = req.params.adminId
+      const adminId = req.admin?.id;
 
-  
-      const trackingId = "SHP" + Date.now().toString() + Math.random().toString(36).substr(2, 4).toUpperCase()
+
+      if (!adminId ) {
+        throw new AppError(400, "Valid admin ID is required")
+      }
+
+      validateShipmentCreationDto(req.body)
+
+
+      const adminExists = await Admin.findByPk(Number(adminId))
+      if (!adminExists) {
+        throw new AppError(404, "Admin not found")
+      }
+
+      const trackingId = generateTrackingId()
 
       const shipmentData = {
         ...req.body,
-        adminId: Number.parseInt(adminId),
+        adminId: Number(adminId),
         shipmentID: trackingId,
         expectedTimeOfArrival: new Date(req.body.expectedTimeOfArrival),
+        receptionDate: req.body.receptionDate ? new Date(req.body.receptionDate) : null,
       }
 
-      const shipment = await ShipmentDetails.create(shipmentData)
+      const shipment = await Shipment.create(shipmentData);
 
-
-      const response = await ShipmentDetails.findByPk(shipment.id, {
-        include: [
-          {
-            model: ShippingStage,
-            as: "ShippingStages",
-          },
-        ],
-      })
-
-      res.stage(201).json(response)
+      logger.info(`Shipment created successfully: ${trackingId}`);
+      const response: ApiResponse<Shipment> = {
+        success: true,
+        message: "Shipment created successfully",
+        data: shipment
+      };
+      res.status(201).json(response);
     } catch (error) {
-      logger.error("Error creating shipment:", error)
-      res.stage(500).json({
-        error: "Failed to create shipment",
-        details: error instanceof Error ? error.message : "Unknown error",
-      })
+      handleError(error, "create shipment", res);
     }
   },
 
-  async listShipments(req: Request, res: Response, next: NextFunction):Promise<any> {
+  async listShipments(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const adminId = Number.parseInt(req.params.adminId)
+      const adminId = req.admin?.id;
+      const { page = 1, limit = 10, status, freightType } = req.query
 
-      const shipments = await ShipmentDetails.findAll({
-        where: { adminId },
+      // Validate adminId parameter
+      if (!adminId ) {
+        throw new AppError(400, "Valid admin ID is required")
+      }
+
+      // Check if admin exists
+      const adminExists = await Admin.findByPk(Number(adminId))
+      if (!adminExists) {
+        throw new AppError(404, "Admin not found")
+      }
+
+      // Build where clause
+      const whereClause: any = { adminId: Number(adminId) }
+      if (status) whereClause.status = status
+      if (freightType) whereClause.freightType = freightType
+
+      // Pagination
+      const offset = (Number(page) - 1) * Number(limit)
+
+      const { count, rows: shipments } = await Shipment.findAndCountAll({
+        where: whereClause,
         attributes: [
           "id",
           "shipmentID",
           "senderName",
           "recipientName",
-          "receivingAddress",
+          "origin",
+          "destination",
           "freightType",
+          "status",
           "expectedTimeOfArrival",
           "createdAt",
           "updatedAt",
         ],
         order: [["createdAt", "DESC"]],
+        limit: Number(limit),
+        offset,
       })
 
-      return res.json(shipments)
+      logger.info(`Listed ${shipments.length} shipments for admin ${adminId}`);
+      const response: ApiResponse<Shipment[]> = {
+        success: true,
+        data: shipments,
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total: count,
+          totalPages: Math.ceil(count / Number(limit))
+        }
+      };
+      res.json(response);
     } catch (error) {
-      logger.error("Error listing shipments:", error)
-      res.stage(500).json({
-        error: "Failed to fetch shipments",
-        details: error instanceof Error ? error.message : "Unknown error",
-      })
+      handleError(error, "list shipments", res);
     }
   },
 
-  async getShipmentDetails(req: Request, res: Response, next: NextFunction):Promise<any> {
+  async getShipment(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
-    console.log('in get ship det')
-      const shipment = await ShipmentDetails.findByPk(id, {
+
+      // Validate id parameter
+      if (!id || isNaN(Number(id))) {
+        throw new AppError(400, "Valid shipment ID is required")
+      }
+
+      const shipment = await Shipment.findByPk(Number(id), {
         include: [
           {
-            model: ShippingStage,
-            as: "ShippingStages",
+            model: Stage,
+            as: "Stages",
             order: [["createdAt", "DESC"]],
           },
-        ],
-      })
-    console.log(shipment)
-      if (!shipment) {
-        return res.stage(404).json({ error: "Shipment not found" })
-      }
-
-      return  res.stage(200).json(shipment)
-    } catch (error) {
-      logger.error("Error getting shipment details:", error)
-      res.stage(500).json({
-        error: "Failed to fetch shipment details",
-        details: error instanceof Error ? error.message : "Unknown error",
-      })
-    }
-  },
-
-  async updateShipment(req: Request, res: Response, next: NextFunction):Promise<any> {
-    try {
-      const { id } = req.params
-
-      // Convert date if provided
-      if (req.body.expectedTimeOfArrival) {
-        req.body.expectedTimeOfArrival = new Date(req.body.expectedTimeOfArrival)
-      }
-
-      const [updated] = await ShipmentDetails.update(req.body, {
-        where: { id: Number.parseInt(id) },
-      })
-
-      if (!updated) {
-        return res.stage(404).json({ error: "Shipment not found" })
-      }
-
-      const shipment = await ShipmentDetails.findByPk(id, {
-        include: [
           {
-            model: ShippingStage,
-            as: "ShippingStages",
+            model: Admin,
+            as: "admin",
+            attributes: ["id", "email", "name"],
           },
         ],
       })
 
-      return res.json(shipment)
+      if (!shipment) {
+        throw new AppError(404, "Shipment not found")
+      }
+
+
+      logger.info(`Retrieved shipment details for ID: ${id}`);
+      const response: ApiResponse<Shipment> = {
+        success: true,
+        data: shipment
+      };
+      res.json(response);
     } catch (error) {
-      logger.error("Error updating shipment:", error)
-      res.stage(500).json({
-        error: "Failed to update shipment",
-        details: error instanceof Error ? error.message : "Unknown error",
-      })
+      handleError(error, "get shipment", res);
     }
   },
 
-  async deleteShipment(req: Request, res: Response, next: NextFunction):Promise<any> {
+  async updateShipment(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
 
+      // Validate id parameter
+      if (!id || isNaN(Number(id))) {
+        throw new AppError(400, "Valid shipment ID is required")
+      }
+
+
+      validateShipmentUpdateData(req.body)
+
+
+      // Check if shipment exists
+      const existingShipment = await Shipment.findByPk(Number(id))
+      if (!existingShipment) {
+        throw new AppError(404, "Shipment not found")
+      }
+
+      // Prepare update data
+      const updateData = { ...req.body }
+      if (req.body.expectedTimeOfArrival) {
+        updateData.expectedTimeOfArrival = new Date(req.body.expectedTimeOfArrival)
+      }
+      if (req.body.receptionDate) {
+        updateData.receptionDate = new Date(req.body.receptionDate)
+      }
+      const [affectedCount] = await Shipment.update(updateData, {
+        where: { id: Number(id) },
+      });
+
+      if (affectedCount === 0) {
+        throw new AppError(500, "Failed to update shipment");
+      }
+
+      const updatedShipment = await Shipment.findByPk(Number(id), {
+        include: [
+          { model: Stage, as: "Stages", order: [["createdAt", "DESC"]] },
+          { model: Admin, as: "admin", attributes: ["id", "email", "name"] }
+        ]
+      });
+      if (!updatedShipment) {
+        throw new AppError(404, "Shipment not found");
+      }
+
+      logger.info(`Shipment updated successfully: ${id}`);
+      const response: ApiResponse<Shipment> = {
+        success: true,
+        message: "Shipment updated successfully",
+        data: updatedShipment
+      };
+      res.json(response);
+    } catch (error) {
+      handleError(error, "update shipment", res);
+    }
+  },
+
+  async deleteShipment(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params
+
+      // Validate id parameter
+      if (!id || isNaN(Number(id))) {
+        throw new AppError(400, "Valid shipment ID is required")
+      }
+
+      // Check if shipment exists
+      const existingShipment = await Shipment.findByPk(Number(id))
+      if (!existingShipment) {
+        throw new AppError(404, "Shipment not found")
+      }
+
       // Delete associated shipping stages first
-      await ShippingStage.destroy({
-        where: { shipmentDetailsId: Number.parseInt(id) },
+      await Stage.destroy({
+        where: { shipmentId: Number(id) },
       })
 
-      const deleted = await ShipmentDetails.destroy({
-        where: { id: Number.parseInt(id) },
+      const deleted = await Shipment.destroy({
+        where: { id: Number(id) },
       })
 
       if (!deleted) {
-        return res.stage(404).json({ error: "Shipment not found" })
+        throw new AppError(500, "Failed to delete shipment")
       }
 
-      return res.json({ message: "Shipment deleted successfully" })
+      logger.info(`Shipment deleted successfully: ${id}`);
+      const response: ApiResponse<null> = {
+        success: true,
+        message: "Shipment deleted successfully"
+      };
+      res.json(response);
     } catch (error) {
-      logger.error("Error deleting shipment:", error)
-      res.stage(500).json({
-        error: "Failed to delete shipment",
-        details: error instanceof Error ? error.message : "Unknown error",
-      })
+      handleError(error, "delete shipment", res);
     }
   },
 
-   async trackShipment(req: Request, res: Response, next: NextFunction) {
-    console.log("in tracking function")
+  async trackShipment(req: Request, res: Response): Promise<void> {
     try {
+      // ... existing validation and logic ...
       const { trackingId } = req.params
       const { lat, lng } = req.query
 
-      if (!trackingId) {
-        throw new AppError(400, "Tracking ID is required")
+      // Validate tracking ID
+      if (!trackingId || typeof trackingId !== 'string' || trackingId.trim().length === 0) {
+        throw new AppError(400, "Valid tracking ID is required")
       }
 
-      const shipmentDetails = await ShipmentDetails.findOne({
-        where: { shipmentID: trackingId },
+      const shipment = await Shipment.findOne({
+        where: { shipmentID: trackingId.trim() },
+        include: [
+          {
+            model: Admin,
+            as: "admin",
+            attributes: ["id", "email", "name"],
+          },
+          {
+            model: Stage,
+            as: "stages",
+            order: [["dateAndTime", "DESC"]],
+          },
+        ],
       })
 
-      if (!shipmentDetails) {
+      if (!shipment) {
         throw new AppError(404, "Tracking ID not found")
       }
-      const stages = await ShippingStage.findAll({
-        where: { shipmentDetailsId: shipmentDetails.id },
-        order: [["dateAndTime", "DESC"]],
-      })
-      console.log(stages)
 
-      const admin = await Admin.findByPk(shipmentDetails.adminId)
 
-      if (admin) {
+      // Send notification email if admin exists and coordinates provided
+      if (shipment.admin && lat && lng) {
         try {
-          await sendCustomMail(admin.email, {subject:'Shipment Tracked',
-            senderName: shipmentDetails.senderName,
-            recipientName: shipmentDetails.recipientName,
-            receivingAddress: shipmentDetails.receivingAddress,
-            shipmentID: shipmentDetails.shipmentID,
-            loction: { lat, lng }
+          // Import sendCustomMail here to avoid circular dependencies
+          const { sendCustomMail } = await import("../services/mailService")
 
-          });
+          await sendCustomMail(shipment.admin.email, {
+            subject: 'Shipment Tracked',
+            senderName: shipment.senderName,
+            recipientName: shipment.recipientName,
+            shipmentID: shipment.shipmentID,
+            location: { lat: String(lat), lng: String(lng) }
+          })
         } catch (error) {
-          console.error('Failed to send email:', error);
+          logger.error('error occured sending tracking custom mail, error: ', error)
         }
       }
+        logger.info(`Shipment tracked: ${trackingId}`);
+        const response: ApiResponse<Shipment> = {
+          success: true,
+          data:
+            shipment
+        }
 
-      res.json({
-        shipmentDetails,
-        shippingStages: stages,
-      })
-    } catch (error) {
-      console.error("Tracking error:", error)
-      if (error instanceof AppError && error.message === "Tracking ID not found") {
-        next(error)
-      } else {
-        next(new AppError(500, "Failed to load tracking data"))
+        res.json(response);
+      } 
+      catch (error) {
+        handleError(error, "track shipment", res);
       }
     }
-  }
 }
+function validateCreateShipmentData(body: any) {
+  throw new Error("Function not implemented.")
+}
+

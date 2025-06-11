@@ -2,17 +2,17 @@
 'use client';
 
 import { useState } from 'react';
-import { ShippingStage } from '@/types/shippingStage';
+import { Stage } from '@/types/Stage';
 import { XMarkIcon, CurrencyDollarIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 
 interface PaymentApprovalModalProps {
   onClose: () => void;
-  shippingStage: ShippingStage;
+  Stage: Stage;
 }
 
-export function PaymentApprovalModal({ onClose, shippingStage }: PaymentApprovalModalProps) {
+export function PaymentApprovalModal({ onClose, Stage }: PaymentApprovalModalProps) {
   const [formData, setFormData] = useState({
-    amountPaid: shippingStage.feeInDollars?.toString() || '',
+    amountPaid: Stage.feeInDollars?.toString() || '',
     paymentDate: new Date().toISOString().split('T')[0],
     notes: '',
   });
@@ -40,7 +40,7 @@ export function PaymentApprovalModal({ onClose, shippingStage }: PaymentApproval
 
       // Your API call logic here
       const payload = {
-        id: shippingStage.id,
+        id: Stage.id,
         amountPaid,
         paymentDate: new Date(formData.paymentDate),
         paymentStatus: 'PAID',
@@ -72,7 +72,7 @@ export function PaymentApprovalModal({ onClose, shippingStage }: PaymentApproval
             </div>
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Approve Payment</h2>
-              <p className="text-sm text-gray-600">{shippingStage.title}</p>
+              <p className="text-sm text-gray-600">{Stage.title}</p>
             </div>
           </div>
           <button
@@ -88,22 +88,22 @@ export function PaymentApprovalModal({ onClose, shippingStage }: PaymentApproval
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-gray-600">Location:</span>
-              <p className="font-medium text-gray-900">{shippingStage.location}</p>
+              <p className="font-medium text-gray-900">{Stage.location}</p>
             </div>
             <div>
               <span className="text-gray-600">Required Fee:</span>
               <p className="font-medium text-gray-900">
-                {shippingStage.feeInDollars ? formatCurrency(shippingStage.feeInDollars) : 'N/A'}
+                {Stage.feeInDollars ? formatCurrency(Stage.feeInDollars) : 'N/A'}
               </p>
             </div>
             <div>
               <span className="text-gray-600">Current Status:</span>
-              <p className="font-medium text-gray-900">{shippingStage.paymentStatus}</p>
+              <p className="font-medium text-gray-900">{Stage.paymentStatus}</p>
             </div>
             <div>
               <span className="text-gray-600">Stage Date:</span>
               <p className="font-medium text-gray-900">
-                {new Date(shippingStage.dateAndTime).toLocaleDateString()}
+                {new Date(Stage.dateAndTime).toLocaleDateString()}
               </p>
             </div>
           </div>

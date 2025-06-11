@@ -15,7 +15,7 @@ interface DeleteModalProps {
 const API_ROUTES_MAP = {
   shipment: routes.shipment.delete,
   wallet: routes.cryptoWallet.delete,
-  stage: routes.shippingStages.delete,
+  stage: routes.Stages.delete,
   "social-media": routes.socialMedia.delete,
   'document-template':routes.templates.delete
 }

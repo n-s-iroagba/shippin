@@ -6,8 +6,8 @@ describe('Admin Journeys', () => {
     cy.intercept('POST', '/api/signup').as('signupRequest');
     cy.intercept('GET', '/api/shipments/admin/*').as('getShipments');
     cy.intercept('POST', '/api/shipments/admin/*').as('createShipment');
-    cy.intercept('POST', '/api/shippingStage/*').as('updateStatus');
-    cy.intercept('DELETE', '/api/shippingStage/*').as('deleteStatus');
+    cy.intercept('POST', '/api/Stage/*').as('updateStatus');
+    cy.intercept('DELETE', '/api/Stage/*').as('deleteStatus');
     cy.intercept('GET', '/api/wallets/admin').as('getWallets');
     cy.intercept('POST', '/api/wallets').as('createWallet');
     cy.intercept('DELETE', '/api/wallets/*').as('deleteWallet');

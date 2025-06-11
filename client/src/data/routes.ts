@@ -12,8 +12,8 @@ export const routes = {
     update: (stageId: number) => `/admin/stage/${stageId}`,
     unapprovedPayments:(adminId: number) => `/admin/stage/unapproved-payments/${adminId}`,
     delete: (stageId: number) => `/admin/stage/${stageId}`,
-    approvePayment: (shippingStageId: number) => `/stagees/${shippingStageId}/approve-payment`,
-    uploadReceipt: (shippingStageId: number) => `/stagees/${shippingStageId}/upload-receipt`,
+    approvePayment: (StageId: number) => `/stagees/${StageId}/approve-payment`,
+    uploadReceipt: (StageId: number) => `/stagees/${StageId}/upload-receipt`,
   },
  
   auth: {

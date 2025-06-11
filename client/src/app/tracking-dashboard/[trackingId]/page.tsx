@@ -5,32 +5,33 @@ import { useEffect, useState } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faBox, faInfoCircle, faDollarSign, faFileAlt, faMapMarkerAlt } from "@fortawesome/free-solid-svg-icons"
 import { useParams } from "next/navigation"
-import { SERVER_URL } from "@/data/urls"
-import Loading from "@/components/Loading"
-import type { ShipmentDetails, ShippingStage } from "@/types/shipment.types"
-import DocumentModal from "@/components/DocumentModal"
+
+import type { Shipment, Stage } from "@/types/shipment.types"
+
 import PaymentModal from "@/components/PaymentModal"
-import type { CryptoWalletAttributes } from "@/types/crypto-wallet.types"
-import type { SocialMediaAttributes } from "@/types/social-media.types"
+import type { CryptoWallet } from "@/types/crypto-wallet.types"
+import type { SocialMedia } from "@/types/social-media.types"
+import { protectedApi } from "@/utils/apiUtils"
+import { routes } from "@/data/routes"
 
 const ShipmentTrackingDashboard: React.FC = () => {
-  const [shipmentDetails, setShipmentDetails] = useState<{
-    shipmentDetails: ShipmentDetails
-    shippingStages: ShippingStage[]
+  const [shipment, setShipment] = useState<{
+    shipment: Shipment
+    Stages: Stage[]
   } | null>(null)
-  const [uploadModalStat, setUploadModalStat] = useState<ShippingStage | null>(null)
-  const [paymentModalStat, setPaymentModalStat] = useState<ShippingStage | null>(null)
-  const [viewShipmentDetails, setViewShipmentDetails] = useState(false)
+  const [uploadModalStat, setUploadModalStat] = useState<Stage | null>(null)
+  const [paymentModalStat, setPaymentModalStat] = useState<Stage | null>(null)
+  const [viewShipment, setViewShipment] = useState(false)
   const [selectedDocument, setSelectedDocument] = useState<{ url: string; title: string } | null>(null)
-  const [cryptoWallets, setCryptoWallets] = useState<CryptoWalletAttributes[]>([])
-  const [socialMediaLinks, setSocialMediaLinks] = useState<SocialMediaAttributes[]>([])
+  const [cryptoWallets, setCryptoWallets] = useState<CryptoWallet[]>([])
+  const [socialMediaLinks, setSocialMediaLinks] = useState<SocialMedia[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
 
   const params = useParams()
   const trackingId = params.trackingId
   // Get coordinates from the most recent shipping stage
-  const mostRecentStage = shipmentDetails?.shippingStages?.[0]
+  const mostRecentStage = shipment?.Stages?.[0]
   const long = mostRecentStage?.longitude || -119.417931
   const lat = mostRecentStage?.latitude || 10.606619
 
@@ -77,15 +78,8 @@ const ShipmentTrackingDashboard: React.FC = () => {
     formData.append("paymentReceipt", file)
 
     try {
-      const response = await fetch(`${SERVER_URL}/stagees/${uploadModalStat.id}/upload-receipt`, {
-        method: "POST",
-        body: formData,
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || "Upload failed")
-      }
+      protectedApi.post(routes.stage.uploadReceipt(uploadModalStat.id), formData)
+      
 
       window.location.reload()
     } catch (error) {
@@ -99,7 +93,7 @@ const ShipmentTrackingDashboard: React.FC = () => {
   useEffect(() => {
     if (!trackingId) return
 
-    const fetchShipmentDetails = async () => {
+    const fetchShipment = async () => {
       try {
         const response = await fetch(`${SERVER_URL}/track/shipment/${trackingId}`)
         if (!response.ok) {
@@ -107,10 +101,10 @@ const ShipmentTrackingDashboard: React.FC = () => {
           throw new Error(errorData.message || "Failed to fetch shipment details")
         }
         const data: {
-          shipmentDetails: ShipmentDetails
-          shippingStages: ShippingStage[]
+          shipment: Shipment
+          Stages: Stage[]
         } = await response.json()
-        setShipmentDetails(data)
+        setShipment(data)
       } catch (error) {
         alert(error instanceof Error ? error.message : "An error occurred, try again later")
         console.error("Fetch Error:", error)
@@ -137,7 +131,7 @@ const ShipmentTrackingDashboard: React.FC = () => {
       }
     }
 
-    fetchShipmentDetails()
+    fetchShipment()
     fetchPaymentOptions()
   }, [trackingId])
 
@@ -150,7 +144,7 @@ const ShipmentTrackingDashboard: React.FC = () => {
     }
   }, [selectedDocument])
 
-  if (!shipmentDetails) return <Loading />
+  if (!shipment) return <Loading />
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -165,7 +159,7 @@ const ShipmentTrackingDashboard: React.FC = () => {
         </div>
 
         {/* Payment Alert */}
-        {shipmentDetails.shippingStages?.some((s) => s.paymentStatus === "UNPAID") && (
+        {shipment.Stages?.some((s) => s.paymentStatus === "UNPAID") && (
           <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-500 p-6 mb-8 rounded-xl shadow-sm">
             <div className="flex items-center gap-4">
               <div className="bg-amber-100 p-3 rounded-full">
@@ -198,30 +192,30 @@ const ShipmentTrackingDashboard: React.FC = () => {
         <div>
           <button
             className="inline-block bg-indigo-600 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
-            onClick={() => setViewShipmentDetails(!viewShipmentDetails)}
+            onClick={() => setViewShipment(!viewShipment)}
           >
-            {viewShipmentDetails ? "Collapse Shipment Details" : "View Shipment Details"}
+            {viewShipment ? "Collapse Shipment Details" : "View Shipment Details"}
           </button>
         </div>
 
         {/* Shipment Details Grid */}
-        {viewShipmentDetails && (
+        {viewShipment && (
           <div className="bg-white rounded-2xl shadow-xl p-8 mt-8">
             <h3 className="text-xl font-semibold text-gray-900 mb-8 flex items-center gap-3">
               <FontAwesomeIcon icon={faInfoCircle} className="text-indigo-600" />
               Shipment Details
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <DetailItem label="Shipment ID" value={shipmentDetails.shipmentDetails.shipmentID} />
-              <DetailItem label="Content" value={shipmentDetails.shipmentDetails.shipmentDescription} />
-              <DetailItem label="Sender" value={shipmentDetails.shipmentDetails.senderName} />
-              <DetailItem label="Sending Port" value={shipmentDetails.shipmentDetails.sendingPickupPoint} />
-              <DetailItem label="Delivery Address" value={shipmentDetails.shipmentDetails.receivingAddress} />
-              <DetailItem label="Recipient" value={shipmentDetails.shipmentDetails.recipientName} />
-              <DetailItem label="Freight Type" value={shipmentDetails.shipmentDetails.freightType} />
+              <DetailItem label="Shipment ID" value={shipment.shipment.shipmentID} />
+              <DetailItem label="Content" value={shipment.shipment.shipmentDescription} />
+              <DetailItem label="Sender" value={shipment.shipment.senderName} />
+              <DetailItem label="Sending Port" value={shipment.shipment.sendingPickupPoint} />
+              <DetailItem label="Delivery Address" value={shipment.shipment.receivingAddress} />
+              <DetailItem label="Recipient" value={shipment.shipment.recipientName} />
+              <DetailItem label="Freight Type" value={shipment.shipment.freightType} />
               <DetailItem
                 label="Expected Arrival"
-                value={new Date(shipmentDetails.shipmentDetails.expectedTimeOfArrival).toLocaleDateString()}
+                value={new Date(shipment.shipment.expectedTimeOfArrival).toLocaleDateString()}
               />
             </div>
           </div>
@@ -338,14 +332,14 @@ const ShipmentTrackingDashboard: React.FC = () => {
               </div>
 
               {/* Previous Stages - Skip the most recent stage (index 0) */}
-              {(shipmentDetails.shippingStages || []).slice(1).map((stat, index) => (
+              {(shipment.Stages || []).slice(1).map((stat, index) => (
                 <div key={stat.id} className="flex gap-6 relative">
                   <div className="flex-none">
                     <div className="flex flex-col items-center h-full">
                       <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
                         <FontAwesomeIcon icon={faBox} className="text-gray-500 h-5 w-5" />
                       </div>
-                      {index < shipmentDetails.shippingStages.length - 2 && (
+                      {index < shipment.Stages.length - 2 && (
                         <div className="w-[0.2cm] bg-blue-600 flex-1 mt-1"></div>
                       )}
                     </div>
@@ -490,7 +484,7 @@ const ShipmentTrackingDashboard: React.FC = () => {
       {/* Payment Modal */}
       {paymentModalStat && (
         <PaymentModal
-          
+          statusId={paymentModalStat.id}
           onClose={() => setPaymentModalStat(null)}
           onSuccess={() => window.location.reload()}
           feeInDollars={Number(paymentModalStat.feeInDollars)}

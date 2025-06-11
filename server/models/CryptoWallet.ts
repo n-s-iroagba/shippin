@@ -5,7 +5,7 @@ import { Admin } from './Admin';
 // Define which fields are required when creating a new CryptoWallet
 interface CryptoWalletAttributes {
   id: number;
-  adminId: ForeignKey<Admin['id']>;
+  adminId: number;
   currency: string;
   walletAddress: string;
 }
@@ -14,7 +14,7 @@ interface CryptoWalletCreationAttributes extends Optional<CryptoWalletAttributes
 
 export class CryptoWallet extends Model<CryptoWalletAttributes, CryptoWalletCreationAttributes> implements CryptoWalletAttributes {
   public id!: number;
-  public adminId!: ForeignKey<Admin['id']>;
+  public adminId!: number;
   public currency!: string;
   public walletAddress!: string;
 
@@ -52,7 +52,7 @@ CryptoWallet.init({
 });
 
 // Setup associations (assuming Admin model is defined accordingly)
-Admin.hasMany(CryptoWallet, { foreignKey: 'adminId' });
-CryptoWallet.belongsTo(Admin, { foreignKey: 'adminId' });
+Admin.hasMany(CryptoWallet, { foreignKey: 'adminId', as: 'cryptoWallets' });
+CryptoWallet.belongsTo(Admin, { foreignKey: 'adminId', as: 'admin' });
 
 export default CryptoWallet;

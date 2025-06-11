@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { ApiService } from '@/services/api.service';
 import { CryptoWalletAttributes } from '@/types/crypto-wallet.types';
-import { FiatPlatformAttributes } from '@/types/fiat-platform.types';
+import { SocialMedia } from '@/types/fiat-platform.types';
 import { SocialMedia } from '@/types/social-media.types';
 
 interface PaymentModalProps {
@@ -11,7 +11,7 @@ interface PaymentModalProps {
   onSuccess: () => void;
   feeInDollars: number;
   cryptoWallets: CryptoWalletAttributes[];
-  socialMediaLinks: FiatPlatformAttributes[];
+  socialMediaLinks: SocialMedia[];
 }
 
 export default function PaymentModal({ 
@@ -24,7 +24,7 @@ export default function PaymentModal({
 }: PaymentModalProps) {
   const [paymentMethod, setPaymentMethod] = useState<'crypto' | 'fiat' | null>(null);
   const [selectedWallet, setSelectedWallet] = useState<CryptoWalletAttributes | null>(null);
-  const [selectedPlatform, setSelectedPlatform] = useState<FiatPlatformAttributes | null>(null);
+  const [selectedPlatform, setSelectedPlatform] = useState<SocialMedia | null>(null);
 
   const handleCopyAddress = async () => {
     if (!selectedWallet) return;

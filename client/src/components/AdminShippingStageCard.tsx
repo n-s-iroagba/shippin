@@ -1,7 +1,7 @@
-// @/components/AdminShippingStageCard.tsx
+// @/components/AdminStageCard.tsx
 'use client';
 
-import { ShippingStage } from '@/types/shippingStage';
+import { Stage } from '@/types/Stage';
 import { 
   MapPinIcon, 
   TruckIcon, 
@@ -14,19 +14,19 @@ import {
   XCircleIcon
 } from '@heroicons/react/24/outline';
 
-interface AdminShippingStageCardProps {
-  shippingStage: ShippingStage;
-  onViewDocument: (stage: ShippingStage, type: 'supportingDocument' | 'paymentReceipt') => void;
-  onEdit: (stage: ShippingStage) => void
-  onDelete: (stage: ShippingStage) => void
+interface AdminStageCardProps {
+  Stage: Stage;
+  onViewDocument: (stage: Stage, type: 'supportingDocument' | 'paymentReceipt') => void;
+  onEdit: (stage: Stage) => void
+  onDelete: (stage: Stage) => void
 
 }
 
-export default function AdminShippingStageCard({
-  shippingStage,
+export default function AdminStageCard({
+  Stage,
   onViewDocument,
 
-}: AdminShippingStageCardProps) {
+}: AdminStageCardProps) {
   const getPaymentStatusBadge = (stage: string) => {
     const stageConfig = {
       'NO_PAYMENT_REQUIRED': { color: 'bg-gray-100 text-gray-700', icon: CheckCircleIcon, text: 'No Payment Required' },
@@ -73,49 +73,49 @@ export default function AdminShippingStageCard({
               <TruckIcon className="w-6 h-6 text-blue-600" />
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-semibold text-blue-900 mb-2">{shippingStage.title}</h3>
+              <h3 className="text-xl font-semibold text-blue-900 mb-2">{Stage.title}</h3>
               <div className="flex items-center gap-2 text-gray-600 mb-2">
                 <MapPinIcon className="w-4 h-4" />
-                <span>{shippingStage.location}</span>
+                <span>{Stage.location}</span>
               </div>
               <div className="flex items-center gap-2 text-gray-600 mb-3">
                 <CalendarIcon className="w-4 h-4" />
-                <span>{formatDate(shippingStage.dateAndTime)}</span>
+                <span>{formatDate(Stage.dateAndTime)}</span>
               </div>
-              {getPaymentStatusBadge(shippingStage.paymentStatus)}
+              {getPaymentStatusBadge(Stage.paymentStatus)}
             </div>
           </div>
 
           {/* Carrier Note */}
           <div className="bg-gray-50 p-4 rounded-lg mb-4">
             <h4 className="font-medium text-gray-900 mb-2">Carrier Note</h4>
-            <p className="text-gray-700">{shippingStage.carrierNote}</p>
+            <p className="text-gray-700">{Stage.carrierNote}</p>
           </div>
 
           {/* Payment & Fee Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            {shippingStage.feeInDollars && (
+            {Stage.feeInDollars && (
               <div className="flex items-center gap-2">
                 <CurrencyDollarIcon className="w-5 h-5 text-green-600" />
-                <span className="text-sm text-gray-600">Fee: {formatCurrency(shippingStage.feeInDollars)}</span>
+                <span className="text-sm text-gray-600">Fee: {formatCurrency(Stage.feeInDollars)}</span>
               </div>
             )}
-            {shippingStage.amountPaid && (
+            {Stage.amountPaid && (
               <div className="flex items-center gap-2">
                 <CheckCircleIcon className="w-5 h-5 text-green-600" />
-                <span className="text-sm text-gray-600">Paid: {formatCurrency(shippingStage.amountPaid)}</span>
+                <span className="text-sm text-gray-600">Paid: {formatCurrency(Stage.amountPaid)}</span>
               </div>
             )}
-            {shippingStage.percentageNote && (
+            {Stage.percentageNote && (
               <div className="col-span-full">
-                <span className="text-sm text-blue-600 font-medium">{shippingStage.percentageNote}</span>
+                <span className="text-sm text-blue-600 font-medium">{Stage.percentageNote}</span>
               </div>
             )}
           </div>
 
-          {shippingStage.paymentDate && (
+          {Stage.paymentDate && (
             <div className="text-sm text-gray-500">
-              Payment Date: {formatDate(shippingStage.paymentDate)}
+              Payment Date: {formatDate(Stage.paymentDate)}
             </div>
           )}
         </div>
@@ -126,9 +126,9 @@ export default function AdminShippingStageCard({
           <div className="space-y-2">
             <h4 className="font-medium text-gray-900 text-sm">Documents</h4>
             
-            {shippingStage.supportingDocument && (
+            {Stage.supportingDocument && (
               <button
-                onClick={() => onViewDocument(shippingStage, 'supportingDocument')}
+                onClick={() => onViewDocument(Stage, 'supportingDocument')}
                 className="w-full bg-blue-100 text-blue-700 p-3 rounded-lg hover:bg-blue-200 transition-colors flex items-center gap-2 justify-center text-sm"
               >
                 <DocumentTextIcon className="w-4 h-4" />
@@ -136,9 +136,9 @@ export default function AdminShippingStageCard({
               </button>
             )}
 
-            {shippingStage.paymentReceipt && (
+            {Stage.paymentReceipt && (
               <button
-                onClick={() => onViewDocument(shippingStage, 'paymentReceipt')}
+                onClick={() => onViewDocument(Stage, 'paymentReceipt')}
                 className="w-full bg-green-100 text-green-700 p-3 rounded-lg hover:bg-green-200 transition-colors flex items-center gap-2 justify-center text-sm"
               >
                 <DocumentTextIcon className="w-4 h-4" />
@@ -146,7 +146,7 @@ export default function AdminShippingStageCard({
               </button>
             )}
 
-            {!shippingStage.supportingDocument && !shippingStage.paymentReceipt && (
+            {!Stage.supportingDocument && !Stage.paymentReceipt && (
               <div className="text-sm text-gray-500 text-center py-2">
                 No documents available
               </div>
@@ -154,11 +154,11 @@ export default function AdminShippingStageCard({
           </div>
 
           {/* Payment Action */}
-          {(shippingStage.paymentStatus === 'UNPAID' || shippingStage.paymentStatus === 'PENDING') && (
+          {(Stage.paymentStatus === 'UNPAID' || Stage.paymentStatus === 'PENDING') && (
             <div className="space-y-2">
               <h4 className="font-medium text-gray-900 text-sm">Payment</h4>
               <button
-                onClick={() => onApprovePayment(shippingStage)}
+                onClick={() => onApprovePayment(Stage)}
                 className="w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 justify-center text-sm font-medium"
               >
                 <CreditCardIcon className="w-4 h-4" />
@@ -171,8 +171,8 @@ export default function AdminShippingStageCard({
           <div className="bg-gray-50 p-3 rounded-lg">
             <h4 className="font-medium text-gray-900 text-sm mb-2">Coordinates</h4>
             <div className="text-xs text-gray-600">
-              <div>Lat: {shippingStage.latitude}</div>
-              <div>Lng: {shippingStage.longitude}</div>
+              <div>Lat: {Stage.latitude}</div>
+              <div>Lng: {Stage.longitude}</div>
             </div>
           </div>
         </div>

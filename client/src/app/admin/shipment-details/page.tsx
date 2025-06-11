@@ -6,7 +6,7 @@ import { CreateShipmentModal } from "@/components/ShipmentModals";
 
 import { useRouter } from "next/navigation";
 import React, {useState } from "react";
-import { ShipmentDetails } from "@/types/shipment.types";
+import { Shipment } from "@/types/shipment.types";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetList } from "@/hooks/useGet";
 import { routes } from "@/data/routes";
@@ -16,14 +16,14 @@ import ErrorAlert from "@/components/ErrorAlert";
 const ShipmentDashboard: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const {id:adminId,displayName}= useAuth()
-  const {error, loading, data:shipments} = useGetList<ShipmentDetails>(routes.shipment.list(adminId),true)
+  const {error, loading, data:shipments} = useGetList<Shipment>(routes.shipment.list(adminId),true)
 
   const router = useRouter();
 
  
 
 
-  const updateUI = async (newShipment: ShipmentDetails) => {
+  const updateUI = async (newShipment: Shipment) => {
    router.push(routes.shipment.details(newShipment.id));
     setShowCreateModal(false);
   };

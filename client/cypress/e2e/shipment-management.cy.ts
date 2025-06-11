@@ -4,7 +4,7 @@ describe('Shipment Management', () => {
   beforeEach(() => {
     cy.intercept('POST', '/api/admin/shipments').as('createShipment');
     cy.intercept('GET', '/api/admin/shipments').as('getShipments');
-    cy.intercept('GET', '/api/admin/shipments/*').as('getShipmentDetails');
+    cy.intercept('GET', '/api/admin/shipments/*').as('getShipment');
     cy.intercept('PUT', '/api/admin/shipments/*').as('updateShipment');
     cy.intercept('DELETE', '/api/admin/shipments/*').as('deleteShipment');
     cy.intercept('POST', '/api/shipments/*/stagees').as('createStatus');
@@ -79,7 +79,7 @@ describe('Shipment Management', () => {
     it('should display shipment details', () => {
       cy.visit('/admin/shipments');
       cy.contains('View').first().click();
-      cy.wait('@getShipmentDetails').its('response.stageCode').should('eq', 200);
+      cy.wait('@getShipment').its('response.stageCode').should('eq', 200);
       cy.get('[data-testid="shipment-details"]').should('be.visible');
     });
 

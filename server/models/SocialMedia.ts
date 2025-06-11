@@ -1,5 +1,5 @@
 import { Model, DataTypes, ForeignKey } from 'sequelize';
-import {sequelize} from '../config/database';
+import { sequelize } from '../config/database';
 import { Admin } from './Admin';
 
 export class SocialMedia extends Model {
@@ -7,6 +7,7 @@ export class SocialMedia extends Model {
   public adminId!: ForeignKey<Admin['id']>;
   public name!: string;
   public url!: string;
+  public logo!: Buffer; 
 }
 
 SocialMedia.init({
@@ -33,6 +34,9 @@ SocialMedia.init({
     validate: {
       isUrl: true
     }
+  },
+  logo: {
+    type: DataTypes.BLOB('long'), 
   }
 }, {
   sequelize,
@@ -40,5 +44,5 @@ SocialMedia.init({
   timestamps: true
 });
 
-SocialMedia.belongsTo(Admin, { foreignKey: 'adminId' });
-Admin.hasMany(SocialMedia, { foreignKey: 'adminId' });
+SocialMedia.belongsTo(Admin, { foreignKey: 'adminId', as: 'admin' });
+Admin.hasMany(SocialMedia, { foreignKey: 'adminId', as: 'socialMedia' });
