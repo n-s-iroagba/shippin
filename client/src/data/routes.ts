@@ -10,10 +10,12 @@ export const routes = {
   stage: {
     create: (shipmentId: number) => `/admin/stage/${shipmentId}`,
     update: (stageId: number) => `/admin/stage/${stageId}`,
-    unapprovedPayments:(adminId: number) => `/admin/stage/unapproved-payments/${adminId}`,
+    unapprovedPayments: (adminId: number) => `/admin/stage/unapproved-payments/${adminId}`,
     delete: (stageId: number) => `/admin/stage/${stageId}`,
-    approvePayment: (StageId: number) => `/stagees/${StageId}/approve-payment`,
-    uploadReceipt: (StageId: number) => `/stagees/${StageId}/upload-receipt`,
+    uploadReceipt: (stageId: number) => `/admin/stage/${stageId}/upload-receipt`,
+    verifyPayment: (stageId: number) => `/admin/stage/${stageId}/verify-payment`,
+    getReceipts: (stageId: number) => `/admin/stage/${stageId}/receipts`,
+    togglePayment:(stageId:number) => `/admin/stage/${stageId}/toggle-payment-status"`
   },
  
   auth: {

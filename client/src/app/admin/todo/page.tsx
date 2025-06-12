@@ -3,7 +3,7 @@ import { routes } from "@/data/routes"
 import { useAuth } from "@/hooks/useAuth"
 import { useGetList } from "@/hooks/useGet"
 import { useRouter } from "next/navigation"
-import { Stage } from '@/types/shipment.types';
+import { Stage } from '@/types/stage.types';
 import TodoAlert from "@/components/TodoAlert"
 import { ReactNode, useEffect } from "react"
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline"

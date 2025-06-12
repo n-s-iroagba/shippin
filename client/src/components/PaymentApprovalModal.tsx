@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Stage } from '@/types/Stage';
+import { Stage } from '@/types/stage.types';
 import { XMarkIcon, CurrencyDollarIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 
 interface PaymentApprovalModalProps {
@@ -12,7 +12,7 @@ interface PaymentApprovalModalProps {
 
 export function PaymentApprovalModal({ onClose, Stage }: PaymentApprovalModalProps) {
   const [formData, setFormData] = useState({
-    amountPaid: Stage.feeInDollars?.toString() || '',
+    amountPaid: Stage.amountPaid?.toString() || '',
     paymentDate: new Date().toISOString().split('T')[0],
     notes: '',
   });
@@ -72,7 +72,7 @@ export function PaymentApprovalModal({ onClose, Stage }: PaymentApprovalModalPro
             </div>
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Approve Payment</h2>
-              <p className="text-sm text-gray-600">{Stage.title}</p>
+              <p className="text-sm text-gray-600">Stage {Stage.id}</p>
             </div>
           </div>
           <button
@@ -93,7 +93,7 @@ export function PaymentApprovalModal({ onClose, Stage }: PaymentApprovalModalPro
             <div>
               <span className="text-gray-600">Required Fee:</span>
               <p className="font-medium text-gray-900">
-                {Stage.feeInDollars ? formatCurrency(Stage.feeInDollars) : 'N/A'}
+                {Stage.amountPaid ? formatCurrency(Stage.amountPaid) : 'N/A'}
               </p>
             </div>
             <div>
@@ -138,12 +138,36 @@ export function PaymentApprovalModal({ onClose, Stage }: PaymentApprovalModalPro
                   required
                 />
               </div>
-           
+            </div>
+            
+            <div>
+              <label htmlFor="paymentDate" className="block text-sm font-medium text-gray-700 mb-2">
+                Payment Date *
+              </label>
+              <input
+                type="date"
+                id="paymentDate"
+                value={formData.paymentDate}
+                onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                required
+              />
             </div>
 
-       
-
-       
+            <div>
+              <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
+                Notes (Optional)
+              </label>
+              <textarea
+                id="notes"
+                rows={3}
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="Add any additional notes about this payment..."
+              />
+            </div>
+          </div>
 
           {/* Footer */}
           <div className="flex flex-col sm:flex-row gap-3 mt-6">

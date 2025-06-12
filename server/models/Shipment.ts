@@ -15,7 +15,7 @@ import { FreightType, ShipmentStatus } from '../types/shipment.types';
 export interface ShipmentAttributes {
   id: number
   shipmentID: string
-  adminId: ForeignKey<Admin["id"]>
+  adminId: number
   admin?: NonAttribute<Admin>
   senderName: string
   codename: string
@@ -38,7 +38,7 @@ export class Shipment extends Model<
 > implements ShipmentAttributes {
   declare id: CreationOptional<number>
   declare shipmentID: string
-  declare adminId: ForeignKey<Admin["id"]>
+  declare adminId: number
   declare admin?: NonAttribute<Admin>
   declare senderName: string
   declare codename: string

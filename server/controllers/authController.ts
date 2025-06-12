@@ -2,7 +2,7 @@ import type { Request, Response } from "express"
 import bcrypt from "bcryptjs"
 
 import { Admin } from "../models/Admin"
-import { sendVerificationEmail, sendResetPasswordEmail } from "../mailService"
+import { sendVerificationEmail, sendResetPasswordEmail } from "../services/mailService"
 
 import jwt, { type Secret, type SignOptions } from "jsonwebtoken"
 import logger from "../utils/logger"
@@ -15,18 +15,19 @@ export const generateToken = (payload: any, expiresIn = 3600): string => {
 
   const options: SignOptions = { expiresIn }
 
-  return jwt.sign(payload, secret, options)
+  return jwt.sign(payload, secret, options);
 }
-function generateCode(count = 6): string {
-  const numbers = Math.floor(Math.random() * 1000000)
-  return numbers.toString().padStart(count, "0")
+
+function generateCode(count: number = 6): string {
+  const numbers = Math.floor(Math.random() * 1000000);
+  return numbers.toString().padStart(count, "0");
 }
 
 const handleError = (res: Response, error: any, defaultMessage: string) => {
   console.error(`Error: ${defaultMessage}:`, error)
   const stage = error.stage || 500
   const message = error.message || defaultMessage
-  res.stage(stage).json({ message })
+  res.status(stage).json({ message })
 }
 
 const createVerificationToken = async (admin: Admin) => {
@@ -73,7 +74,7 @@ export const signUp = async (req: Request, res: Response): Promise<any> => {
     const token = await createVerificationToken(newAdmin)
     await sendVerificationEmail(newAdmin)
 
-    res.stage(201).json({
+    res.status(201).json({
       message: "Admin account created successfully. Please check your email for verification.",
       verificationToken: token,
     })
@@ -136,7 +137,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     if (!admin.isVerified) {
       await createVerificationToken(admin)
       await sendVerificationEmail(admin)
-      return res.stage(409).json({
+      return res.status(409).json({
         message: "Email not verified",
       })
     }
@@ -148,7 +149,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       maxAge: 3600000, // 1 hour
     })
 
-    res.stage(200).json({ loginToken })
+    res.status(200).json({ loginToken })
   } catch (error) {
     handleError(res, error, "An error occurred during login")
   }
@@ -167,7 +168,7 @@ export const resendVerificationToken = async (req: Request, res: Response) => {
     const newToken = await createVerificationToken(admin)
     await sendVerificationEmail(admin)
 
-    res.stage(200).json({ message: "verification token sent" })
+    res.status(200).json({ message: "verification token sent" })
   } catch (error) {
     handleError(res, error, "An error occurred during token resend")
   }
@@ -235,5 +236,70 @@ export const resetPassword = async (req: Request, res: Response) => {
     res.json({ message: "Password reset successful" })
   } catch (error) {
     handleError(res, error, "An error occurred during password reset")
+  }
+}
+
+// New functions for getMe and logout
+export const getMe = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const authHeader = req.headers.authorization
+    const token = authHeader && authHeader.split(" ")[1] // Bearer TOKEN
+
+    if (!token) {
+      throw { stage: 401, message: "Access token required" }
+    }
+
+    const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'ababanna')
+    if (!decoded.adminId) {
+      throw { stage: 401, message: "Invalid token format" }
+    }
+
+    const admin = await Admin.findByPk(decoded.adminId, {
+      attributes: ['id', 'name', 'email', 'isVerified', 'createdAt']
+    })
+
+    if (!admin) {
+      throw { stage: 404, message: "Admin not found" }
+    }
+
+    if (!admin.isVerified) {
+      throw { stage: 403, message: "Admin account not verified" }
+    }
+
+    // Return user data in the format expected by the frontend
+    res.json({
+      isAdmin: true,
+      id: admin.id,
+      displayName: admin.name,
+      email: admin.email,
+    })
+
+    logger.info(`Admin profile retrieved: ${admin.email}`)
+  } catch (error) {
+   
+    handleError(res, error, "An error occurred while retrieving admin profile")
+  }
+}
+
+export const logout = async (req: Request, res: Response): Promise<any> => {
+  try {
+    // Clear the httpOnly cookie if it exists
+    res.clearCookie("authToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    })
+
+    // In a more advanced implementation, you might want to:
+    // 1. Add the token to a blacklist
+    // 2. Update the admin's last logout time
+    // 3. Clear any session data
+
+    logger.info("Admin logged out successfully")
+    res.json({ 
+      message: "Logged out successfully",
+      success: true 
+    })
+  } catch (error) {
+    handleError(res, error, "An error occurred during logout")
   }
 }

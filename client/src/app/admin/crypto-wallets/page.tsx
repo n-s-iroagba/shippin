@@ -95,9 +95,7 @@ export default function CryptoWalletCrudPage() {
               onClose={() => setWalletToDelete(null)}
               id={walletToDelete.id}
               type={"wallet"}
-              message={`${walletToDelete.currency} wallet (${
-                walletToDelete.label || "No label"
-              })`}
+              message={`${walletToDelete.currency} `}
             />
           )}
         </div>

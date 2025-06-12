@@ -1,7 +1,7 @@
 // @/components/PendingPaymentCard.tsx
 'use client';
 
-import { Stage } from '@/types/Stage';
+import { Stage } from '@/types/stage.types';
 import { 
   MapPinIcon, 
   TruckIcon, 
@@ -16,7 +16,7 @@ import {
 
 interface PendingPaymentCardProps {
   Stage: Stage;
-  onViewDocument: (stage: Stage, type: 'supportingDocument' | 'paymentReceipt') => void;
+  onViewDocument: (stage: Stage, type: 'supportingDocument' | 'paymentReceipt', receiptIndex?: number) => void;
   onApprovePayment: (stage: Stage) => void;
 }
 
@@ -92,21 +92,16 @@ export default function PendingPaymentCard({
 
           {/* Payment & Fee Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            {Stage.feeInDollars && (
+            {Stage.feeName && (
               <div className="flex items-center gap-2">
                 <CurrencyDollarIcon className="w-5 h-5 text-green-600" />
-                <span className="text-sm text-gray-600">Fee: {formatCurrency(Stage.feeInDollars)}</span>
+                <span className="text-sm text-gray-600">Fee: {Stage.feeName}</span>
               </div>
             )}
             {Stage.amountPaid && (
               <div className="flex items-center gap-2">
                 <CheckCircleIcon className="w-5 h-5 text-green-600" />
                 <span className="text-sm text-gray-600">Paid: {formatCurrency(Stage.amountPaid)}</span>
-              </div>
-            )}
-            {Stage.percentageNote && (
-              <div className="col-span-full">
-                <span className="text-sm text-blue-600 font-medium">{Stage.percentageNote}</span>
               </div>
             )}
           </div>
@@ -124,29 +119,26 @@ export default function PendingPaymentCard({
           <div className="space-y-2">
             <h4 className="font-medium text-gray-900 text-sm">Documents</h4>
             
-            {Stage.supportingDocument && (
-              <button
-                onClick={() => onViewDocument(Stage, 'supportingDocument')}
-                className="w-full bg-blue-100 text-blue-700 p-3 rounded-lg hover:bg-blue-200 transition-colors flex items-center gap-2 justify-center text-sm"
-              >
-                <DocumentTextIcon className="w-4 h-4" />
-                View Supporting Document
-              </button>
-            )}
-
-            {Stage.paymentReceipt && (
-              <button
-                onClick={() => onViewDocument(Stage, 'paymentReceipt')}
-                className="w-full bg-green-100 text-green-700 p-3 rounded-lg hover:bg-green-200 transition-colors flex items-center gap-2 justify-center text-sm"
-              >
-                <DocumentTextIcon className="w-4 h-4" />
-                View Payment Receipt
-              </button>
-            )}
-
-            {!Stage.supportingDocument && !Stage.paymentReceipt && (
+            {/* Payment Receipts */}
+            {Stage.paymentReceipts && Stage.paymentReceipts.length > 0 ? (
+              <div className="space-y-2">
+                <div className="text-xs text-gray-600 mb-1">
+                  Payment Receipts ({Stage.paymentReceipts.length})
+                </div>
+                {Stage.paymentReceipts.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => onViewDocument(Stage, 'paymentReceipt', index)}
+                    className="w-full bg-green-100 text-green-700 p-3 rounded-lg hover:bg-green-200 transition-colors flex items-center gap-2 justify-center text-sm"
+                  >
+                    <DocumentTextIcon className="w-4 h-4" />
+                    View Receipt {index + 1}
+                  </button>
+                ))}
+              </div>
+            ) : (
               <div className="text-sm text-gray-500 text-center py-2">
-                No documents available
+                No payment receipts available
               </div>
             )}
           </div>

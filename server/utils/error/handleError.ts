@@ -3,8 +3,8 @@ import {
   DatabaseError,
   ForeignKeyConstraintError,
 } from "sequelize"
-import { AppError,  ValidationError} from "./AppError"
-import ApiResponse from "../../type/ApiResponse"
+import { AppError, ValidationError } from "./errorClasses"
+import ApiResponse from "../../dto/ApiResponse"
 import logger from "../logger"
 
 export const handleError = (
@@ -12,36 +12,50 @@ export const handleError = (
   context:string,
   res?: Response
 ): void => {
-  logger.error(`[${context}] ${error?.message || error}`)
-
-  let statusCode = 500
-  let message = "An unexpected error occurred"
-  let errors: string[] | undefined = undefined
+  logger.error(`Error in ${context}:`, {
+    error: error.message,
+    stack: error.stack,
+    context
+  })
 
   if (error instanceof AppError) {
-    statusCode = error.code
-    message = error.message
-   
-  } else if (error instanceof ValidationError) {
-    statusCode = 400
-    message = "Validation error"
-    errors = error.errors.map((e) => e.message)
-  } else if (error instanceof ForeignKeyConstraintError) {
-    statusCode = 400
-    message = "Foreign key constraint error"
-  } else if (error instanceof DatabaseError) {
-    statusCode = 500
-    message = "Database error"
+    const response: ApiResponse<null> = {
+      success: false,
+      message: error.message
+    }
+    res?.status(error.code).json(response)
+    return
   }
 
-  const response: ApiResponse<any> = {
+  if (error instanceof ValidationError) {
+    const response: ApiResponse<null> = {
+      success: false,
+      message: error.message,
+      errors: error.errors
+    }
+    res?.status(400).json(response)
+    return
+  }
+
+  // Handle Sequelize validation errors
+  if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
+    const response: ApiResponse<null> = {
     success: false,
-    message,
-    data:errors,
+      message: 'Validation error',
+      errors: error.errors.map((err: any) => ({
+        field: err.path,
+        message: err.message,
+        value: err.value
+      }))
+    }
+    res?.status(400).json(response)
+    return
   }
 
-  // Only send response if res object is available
-  if (res) {
-    res.status(statusCode).json(response)
+  // Handle any other errors
+  const response: ApiResponse<null> = {
+    success: false,
+    message: 'Internal server error'
   }
+  res?.status(500).json(response)
 }

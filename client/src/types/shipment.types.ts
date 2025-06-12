@@ -1,6 +1,8 @@
+import { Stage } from "./stage.types"
 
 export type FreightType= 'RECEIVED (WAREHOUSE)'|'ONBOARD'|'IN TRANSIT'
 export type ShipmentStatus = 'RECEIVED (WAREHOUSE)'|'ONBOARD'|'IN TRANSIT'
+
 export interface Shipment {
   id: number
   shipmentID: string
@@ -15,6 +17,13 @@ export interface Shipment {
   freightType: FreightType
   createdAt: Date
   updatedAt: Date
+  shipmentDescription: string
+  sendingPickupPoint: string
+  receivingAddress: string
+  weight: number
+  dimensionInInches: string
+  receipientEmail: string
+  stages: Stage[]
 }
 
 export interface CreateShipmentDto {
@@ -26,5 +35,11 @@ export interface CreateShipmentDto {
   expectedTimeOfArrival: Date
   status: ShipmentStatus
   freightType: FreightType
+  shipmentDescription: string
+  sendingPickupPoint: string
+  receivingAddress: string
+  weight: number
+  dimensionInInches: string
+  receipientEmail: string
 }
 

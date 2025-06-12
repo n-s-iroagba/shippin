@@ -8,16 +8,16 @@ import ApiResponse from "../dto/ApiResponse"
 import { handleError } from "../utils/error/handleError"
 import { validateShipmentCreationDto, validateShipmentUpdateData} from "../validation/shipment.validation"
 import { generateTrackingId } from "../utils/helpers"
-import { AuthRequest } from "../dto/AuthRequest"
+
 
 
 export const shipmentController = {
-  async createShipment(req: AuthRequest, res: Response): Promise<void> {
+  async createShipment(req: Request, res: Response): Promise<any> {
     try {
-      const adminId = req.admin?.id;
+       const adminId = req.admin?.id;
 
 
-      if (!adminId ) {
+      if (!adminId ) { 
         throw new AppError(400, "Valid admin ID is required")
       }
 
@@ -47,15 +47,15 @@ export const shipmentController = {
         message: "Shipment created successfully",
         data: shipment
       };
-      res.status(201).json(response);
+      return res.status(201).json(response);
     } catch (error) {
       handleError(error, "create shipment", res);
     }
   },
 
-  async listShipments(req: AuthRequest, res: Response): Promise<void> {
+  async listShipments(req: Request, res: Response): Promise<any> {
     try {
-      const adminId = req.admin?.id;
+       const adminId = req.admin?.id;
       const { page = 1, limit = 10, status, freightType } = req.query
 
       // Validate adminId parameter
@@ -114,7 +114,7 @@ export const shipmentController = {
     }
   },
 
-  async getShipment(req: Request, res: Response): Promise<void> {
+  async getShipment(req: Request, res: Response): Promise<any> {
     try {
       const { id } = req.params
 
@@ -154,7 +154,7 @@ export const shipmentController = {
     }
   },
 
-  async updateShipment(req: Request, res: Response): Promise<void> {
+  async updateShipment(req: Request, res: Response): Promise<any> {
     try {
       const { id } = req.params
 
@@ -211,7 +211,7 @@ export const shipmentController = {
     }
   },
 
-  async deleteShipment(req: Request, res: Response): Promise<void> {
+  async deleteShipment(req: Request, res: Response): Promise<any> {
     try {
       const { id } = req.params
 
@@ -250,7 +250,7 @@ export const shipmentController = {
     }
   },
 
-  async trackShipment(req: Request, res: Response): Promise<void> {
+  async trackShipment(req: Request, res: Response): Promise<any> {
     try {
       // ... existing validation and logic ...
       const { trackingId } = req.params

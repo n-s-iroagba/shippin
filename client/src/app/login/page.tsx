@@ -7,22 +7,7 @@ export default function LoginPage() {
 
 
   const handleSubmit = async () => {
-    // try {
-    //   const { data, error: apiError } = await authApi.login({
-    //     email: formData.email,
-    //     password: formData.password,
-    //   })
 
-    //   if (data?.loginToken) {
-    //     localStorage.setItem("admin_token", data.loginToken)
-    //     router.push("/admin/dashboard")
-    //   } else if (apiError) {
-    //     handleApiError(apiError, data as { verificationToken: string })
-    //   }
-    // } catch (err) {
-    //   console.error("Login error:", err)
-    //   setError("An error occurred. Please try again later.")
-    // }
   }
 
 

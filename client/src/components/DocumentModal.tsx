@@ -7,12 +7,13 @@ import Image from 'next/image';
 
 interface DocumentModalProps {
   onClose: () => void;
-  document: File | Buffer | null | undefined;
+  document: Blob ;
   title: string;
-  stageName: string;
+
+
 }
 
-export function DocumentModal({ onClose, document, title, stageName }: DocumentModalProps) {
+export function DocumentModal({ onClose, document, title}: DocumentModalProps) {
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [isImage, setIsImage] = useState(false);
   const [isPdf, setIsPdf] = useState(false);
@@ -28,23 +29,23 @@ export function DocumentModal({ onClose, document, title, stageName }: DocumentM
 
     try {
       let url: string;
-      let fileType: string;
+      let detectedFileType: string;
 
       if (document instanceof File) {
         url = URL.createObjectURL(document);
-        fileType = document.type;
+        detectedFileType = document.type;
       } else if (document instanceof Buffer || (document && typeof document === 'object')) {
         // Handle Buffer or API response
-        const blob = new Blob([document as any], { type: 'application/octet-stream' });
+        const blob = new Blob([document], { type:  'application/octet-stream' });
         url = URL.createObjectURL(blob);
-        fileType = 'application/octet-stream'; // Default, might need to be determined differently
+        detectedFileType = 'application/octet-stream';
       } else {
         throw new Error('Unsupported document type');
       }
 
       setDocumentUrl(url);
-      setIsImage(fileType.startsWith('image/'));
-      setIsPdf(fileType === 'application/pdf');
+      setIsImage(detectedFileType.startsWith('image/'));
+      setIsPdf(detectedFileType === 'application/pdf');
       setLoading(false);
 
       // Cleanup function
@@ -53,20 +54,21 @@ export function DocumentModal({ onClose, document, title, stageName }: DocumentM
           URL.revokeObjectURL(url);
         }
       };
-    } catch (err) {
+    } catch (error) {
+      console.error('Error loading document:', error);
       setError('Failed to load document');
       setLoading(false);
     }
-  }, [document]);
+  }, [document,]);
 
   const handleDownload = () => {
-    if (documentUrl) {
-      const link = document.createElement('a');
+    if (documentUrl && typeof window !== 'undefined') {
+      const link = window.document.createElement('a');
       link.href = documentUrl;
-      link.download = `${stageName}-${title}`;
-      document.body.appendChild(link);
+      link.download = `-${title}`;
+      window.document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      window.document.body.removeChild(link);
     }
   };
 
@@ -77,7 +79,7 @@ export function DocumentModal({ onClose, document, title, stageName }: DocumentM
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
-            <p className="text-sm text-gray-600 mt-1">Stage: {stageName}</p>
+           
           </div>
           <div className="flex items-center gap-3">
             {documentUrl && (
@@ -123,6 +125,8 @@ export function DocumentModal({ onClose, document, title, stageName }: DocumentM
                     src={documentUrl}
                     alt="Document"
                     className="max-w-full h-auto rounded-lg shadow-md"
+                    width={800}
+                    height={600}
                   />
                 </div>
               )}
@@ -142,7 +146,7 @@ export function DocumentModal({ onClose, document, title, stageName }: DocumentM
                   <DocumentTextIcon className="w-16 h-16 text-blue-600 mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Document Ready</h3>
                   <p className="text-gray-600 mb-4">
-                    This document type can't be previewed. Click download to view it.
+                    This document type can&apos;t be previewed. Click download to view it.
                   </p>
                   <button
                     onClick={handleDownload}

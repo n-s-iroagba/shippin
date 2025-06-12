@@ -1,227 +1,356 @@
-import type { Request, Response, NextFunction } from "express"
-import { Stage } from "../models/Stage"
-import { Shipment } from "../models/Shipment"
-import logger from "../utils/logger"
-import { AppError } from "../AppError"
+import { Response,Request } from 'express';
+import { Stage } from '../models/Stage';
+import { Shipment } from '../models/Shipment';
+import { AppError } from '../utils/error/errorClasses';
+import { handleError } from '../utils/error/handleError';
 
-const StageController = {
-async createStatus(req: Request, res: Response, next: NextFunction): Promise<any> {
-  try {
-    const { shipmentId } = req.params
-    const file = (req as any).file
-    const data = { ...req.body }
-    
-    console.log('=== DEBUG INFO ===')
-    console.log('shipmentId:', shipmentId)
-    console.log('file:', file ? 'File present' : 'No file')
-    console.log('req.body:', data)
-    console.log('==================')
+import ApiResponse from '../dto/ApiResponse';
+import logger from '../utils/logger';
+import { validateStageCreationDto } from '../validation/stage.validation';
 
-    // Validate required fields
-    if (!data.title || !data.location || !data.carrierNote || !data.dateAndTime) {
-      console.log('Missing required fields:')
-      console.log('title:', !!data.title)
-      console.log('location:', !!data.location)
-      console.log('carrierNote:', !!data.carrierNote)
-      console.log('dateAndTime:', !!data.dateAndTime)
-      throw new Error("Title, location, carrier note, and date/time are required")
-    }
 
-    const shipment = await Shipment.findOne({ where: { id: shipmentId } })
-    if (!shipment) {
-      console.log('Shipment not found for ID:', shipmentId)
-      throw new Error("Shipment not found")
-    }
-    console.log('Shipment found:', shipment.id)
-
-    // Convert string values to proper types
-    const stageData = {
-      title: data.title,
-      location: data.location,
-      carrierNote: data.carrierNote,
-      dateAndTime: new Date(data.dateAndTime),
-      paymentStatus: data.paymentStatus || "",
-      feeInDollars: data.feeInDollars ? Number.parseFloat(data.feeInDollars) : null,
-      percentageNote: data.percentageNote || null,
-      requiresFee: data.requiresFee === "true" || data.requiresFee === true,
-      longitude:data.longitude,
-      latitude:data.latitude,
-      supportingDocument: file ? file.buffer : null,
-      shipmentId: Number.parseInt(shipmentId),
-    }
-
-    console.log('Stage data to create:', {
-      ...stageData,
-      supportingDocument: stageData.supportingDocument ? 'Buffer present' : null
-    })
-
-    // Add validation for shipmentId
-    if (isNaN(stageData.shipmentId)) {
-      throw new Error('Invalid shipment ID')
-    }
-
-    // Validate dateAndTime
-    if (isNaN(stageData.dateAndTime.getTime())) {
-      throw new Error('Invalid date format')
-    }
-
-    console.log('About to create Stage...')
-    const stage = await Stage.create(stageData)
-    console.log('Successfully created stage:', stage.id)
-    
-    res.stage(201).json(stage)
-  } catch (error:any) {
-    console.error('Error in createStatus:', error)
-    console.error('Error message:', error.message)
-    console.error('Error stack:', error.stack)
-    
-    logger.error("Error creating shipment stage:", { 
-      error: error.message,
-      stack: error.stack,
-      shipmentId: req.params.shipmentId,
-      body: req.body
-    })
-    
-    return res.stage(500).json({ 
-      message: "Error creating shipping stage",
-      error: error.message // Include error message for debugging
-    })
-  }
-},
-
-  async updateStatus(req: Request, res: Response, next: NextFunction): Promise<any> {
+export const stageController = {
+  async list(req: Request, res: Response): Promise<any> {
     try {
-      const { stageId } = req.params
-      const file = (req as any).file
-      const data = { ...req.body }
+       const adminId = req.admin?.id;
+      const { page = 1, limit = 10 } = req.query;
 
-      const stage = await Stage.findByPk(stageId)
-      if (!stage) {
-        return res.stage(404).json({ message: "Shipping stage not found" })
+      if (!adminId) {
+        throw new AppError(400, "Valid admin ID is required");
       }
 
-      // Handle file upload if present - store as blob
-      if (file) {
-        data.supportingDocument = file.buffer.toString("base64")
-      }
+      const offset = (Number(page) - 1) * Number(limit);
 
-      // Convert and validate data types
-      const updateData: any = {}
+      // Get stages through shipments
+      const { count, rows: stages } = await Stage.findAndCountAll({
+        include: [{
+          model: Shipment,
+          where: { adminId },
+          required: true
+        }],
+        order: [['createdAt', 'DESC']],
+        limit: Number(limit),
+        offset
+      });
 
-      if (data.title) updateData.title = data.title
-      if (data.location) updateData.location = data.location
-      if (data.carrierNote) updateData.carrierNote = data.carrierNote
-      if (data.dateAndTime) updateData.dateAndTime = new Date(data.dateAndTime)
-      if (data.paymentStatus) updateData.paymentStatus = data.paymentStatus
-      if (data.feeInDollars !== undefined)
-        updateData.feeInDollars = data.feeInDollars ? Number.parseFloat(data.feeInDollars) : null
-      if (data.percentageNote !== undefined) updateData.percentageNote = data.percentageNote || null
-      if (data.amountPaid !== undefined)
-        updateData.amountPaid = data.amountPaid ? Number.parseFloat(data.amountPaid) : null
-      if (data.paymentDate) updateData.paymentDate = new Date(data.paymentDate)
-      if (data.supportingDocument) updateData.supportingDocument = data.supportingDocument
-
-      await stage.update(updateData)
-
-      const updatedStatus = await Stage.findByPk(stageId)
-      res.json(updatedStatus)
+      logger.info(`Listed ${stages.length} stages for admin ${adminId}`);
+      const response: ApiResponse<Stage[]> = {
+        success: true,
+        data: stages,
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total: count,
+          totalPages: Math.ceil(count / Number(limit))
+        }
+      };
+      return res.status(200).json(response);
     } catch (error) {
-      console.error("Error updating shipment stage:", error)
-      return res.stage(500).json({ message: "Error updating shipping stage" })
+      handleError(error, "list stages", res);
     }
   },
 
-
-  async deleteStage(req: Request, res: Response, next: NextFunction): Promise<any> {
-    const { StageId } = req.params
-
+  async create(req:Request, res: Response): Promise<any> {
     try {
-      const stage = await Stage.findByPk(StageId)
-      if (!stage) {
-        return res.stage(404).json({ message: "Shipping stage not found" })
+       const adminId = req.admin?.id;
+      const { shipmentId } = req.body;
+
+      if (!adminId) {
+        throw new AppError(400, "Valid admin ID is required");
       }
 
-      await stage.destroy()
-      res.stage(200).json({ message: "Shipping stage deleted successfully" })
-    } catch (err) {
-      console.error("Error deleting Stage:", err)
-      return res.stage(500).json({ message: "Error deleting shipping stage" })
+      // Check if shipment exists and belongs to admin
+      const shipment = await Shipment.findOne({
+        where: { id: shipmentId, adminId }
+      });
+
+      if (!shipment) {
+        throw new AppError(404, "Shipment not found or not authorized");
+      }
+
+      // Validate request body
+      validateStageCreationDto(req.body);
+
+      const stage = await Stage.create(req.body);
+
+      logger.info(`Stage created successfully for shipment ${shipmentId}`);
+      const response: ApiResponse<Stage> = {
+        success: true,
+        message: "Stage created successfully",
+        data: stage
+      };
+      res.status(201).json(response);
+    } catch (error) {
+      handleError(error, "create stage", res);
     }
   },
 
-  async uploadReceipt(req: Request, res: Response, next: NextFunction): Promise<any> {
+  async update(req:Request, res: Response): Promise<any> {
     try {
-      const { StageId } = req.params
-      const file = (req as any).file
+      const { id } = req.params;
+       const adminId = req.admin?.id;
+
+      if (!adminId) {
+        throw new AppError(400, "Valid admin ID is required");
+      }
+
+      if (!id || isNaN(Number(id))) {
+        throw new AppError(400, "Valid stage ID is required");
+      }
+
+    
+
+      const stage = await Stage.findByPk(id, {
+        include: [{
+          model: Shipment,
+          required: true
+        }]
+      });
+
+      if (!stage) {
+        throw new AppError(404, "Stage not found");
+      }
+
+      if (!stage.shipment) {
+        throw new AppError(404, "Associated shipment not found");
+      }
+
+      if (stage.shipment.adminId !== adminId) {
+        throw new AppError(403, "Not authorized to update this stage");
+      }
+
+      await stage.update(req.body);
+
+      const updatedStage = await Stage.findByPk(id);
+      if (!updatedStage) {
+        throw new AppError(404, "Failed to retrieve updated stage");
+      }
+
+      logger.info(`Stage updated successfully: ${id}`);
+      const response: ApiResponse<Stage> = {
+        success: true,
+        message: "Stage updated successfully",
+        data: updatedStage
+      };
+      return res.status(200).json(response);
+    } catch (error) {
+      handleError(error, "update stage", res);
+    }
+  },
+
+  async remove(req:Request, res: Response): Promise<any> {
+    try {
+      const { id } = req.params;
+       const adminId = req.admin?.id;
+
+      if (!adminId) {
+        throw new AppError(400, "Valid admin ID is required");
+      }
+
+      if (!id || isNaN(Number(id))) {
+        throw new AppError(400, "Valid stage ID is required");
+      }
+
+      const stage = await Stage.findByPk(id, {
+        include: [{
+          model: Shipment,
+          required: true
+        }]
+      });
+
+      if (!stage) {
+        throw new AppError(404, "Stage not found");
+      }
+
+      if (!stage.shipment) {
+        throw new AppError(404, "Associated shipment not found");
+      }
+
+      if (stage.shipment.adminId !== adminId) {
+        throw new AppError(403, "Not authorized to delete this stage");
+      }
+
+      await stage.destroy();
+
+      logger.info(`Stage deleted successfully: ${id}`);
+      const response: ApiResponse<null> = {
+        success: true,
+        message: "Stage deleted successfully"
+      };
+      return res.status(200).json(response);
+    } catch (error) {
+      handleError(error, "delete stage", res);
+    }
+  },
+
+  async verifyPayment(req:Request, res: Response): Promise<any> {
+    try {
+      const { id } = req.params;
+       const adminId = req.admin?.id;
+      const { paymentStatus } = req.body;
+
+      if (!adminId) {
+        throw new AppError(400, "Valid admin ID is required");
+      }
+
+      if (!id || isNaN(Number(id))) {
+        throw new AppError(400, "Valid stage ID is required");
+      }
+
+      if (!paymentStatus || !['UNPAID', 'PARTIALLY_PAID', 'PAID'].includes(paymentStatus)) {
+        throw new AppError(400, "Valid payment status is required");
+      }
+
+      const stage = await Stage.findByPk(id, {
+        include: [{
+          model: Shipment,
+          required: true
+        }]
+      });
+
+      if (!stage) {
+        throw new AppError(404, "Stage not found");
+      }
+
+      if (!stage.shipment) {
+        throw new AppError(404, "Associated shipment not found");
+      }
+
+      if (stage.shipment.adminId !== adminId) {
+        throw new AppError(403, "Not authorized to verify this stage");
+      }
+
+      // Only admin can update payment status
+      await stage.update({
+        paymentStatus,
+      });
+
+      const updatedStage = await Stage.findByPk(id);
+      if (!updatedStage) {
+        throw new AppError(404, "Failed to retrieve updated stage");
+      }
+
+      logger.info(`Stage payment status updated: ${id}`);
+      const response: ApiResponse<Stage> = {
+        success: true,
+        message: "Payment status updated successfully",
+        data: updatedStage
+      };
+      return res.status(200).json(response);
+    } catch (error) {
+      handleError(error, "verify payment", res);
+    }
+  },
+
+  async getPaymentReceipts(req:Request, res: Response): Promise<any> {
+    try {
+      const { id } = req.params;
+       const adminId = req.admin?.id;
+
+      if (!adminId) {
+        throw new AppError(400, "Valid admin ID is required");
+      }
+
+      if (!id || isNaN(Number(id))) {
+        throw new AppError(400, "Valid stage ID is required");
+      }
+
+      const stage = await Stage.findByPk(id, {
+        include: [{
+          model: Shipment,
+          required: true
+        }]
+      });
+
+      if (!stage) {
+        throw new AppError(404, "Stage not found");
+      }
+
+      if (!stage.shipment) {
+        throw new AppError(404, "Associated shipment not found");
+      }
+
+      if (stage.shipment.adminId !== adminId) {
+        throw new AppError(403, "Not authorized to view this stage's receipts");
+      }
+
+      if (!stage.paymentReceipts || stage.paymentReceipts.length === 0) {
+        throw new AppError(404, "No payment receipts found");
+      }
+
+      // Return the receipts as base64 strings
+      const receipts = stage.paymentReceipts.map(receipt => receipt.toString('base64'));
+
+      const response: ApiResponse<string[]> = {
+        success: true,
+        data: receipts
+      };
+      return res.status(200).json(response);
+    } catch (error) {
+      handleError(error, "get payment receipts", res);
+    }
+  },
+
+  async uploadReceipt(req:Request, res: Response): Promise<any> {
+    try {
+      const { id } = req.params;
+       const adminId = req.admin?.id;
+      const file = req.file;
+
+      if (!adminId) {
+        throw new AppError(400, "Valid admin ID is required");
+      }
+
+      if (!id || isNaN(Number(id))) {
+        throw new AppError(400, "Valid stage ID is required");
+      }
 
       if (!file) {
-        return res.stage(400).json({ message: "No receipt file uploaded" })
+        throw new AppError(400, "Payment receipt file is required");
       }
 
-      const stage = await Stage.findByPk(StageId)
+      const stage = await Stage.findByPk(id, {
+        include: [{
+          model: Shipment,
+          required: true
+        }]
+      });
+
       if (!stage) {
-        return res.stage(404).json({ message: "Shipping stage not found" })
+        throw new AppError(404, "Stage not found");
       }
 
-      // Validate that this stage requires payment
-      if (!stage.feeInDollars || Number(stage.feeInDollars) <= 0) {
-        throw new AppError(400, "This shipping stage does not require payment")
+      if (!stage.shipment) {
+        throw new AppError(404, "Associated shipment not found");
       }
 
+      if (stage.shipment.adminId !== adminId) {
+        throw new AppError(403, "Not authorized to upload receipt for this stage");
+      }
+
+      // Add the new receipt to the existing receipts array
+      const updatedReceipts = [...(stage.paymentReceipts || []), file.buffer];
+
+      // Update the stage with the new receipt and set payment status to PENDING
       await stage.update({
-        paymentReceipt: file.buffer,
-        paymentStatus: "PENDING",
-      })
+        paymentReceipts: updatedReceipts,
+        paymentStatus: 'PENDING'
+      });
 
-      res.json({ message: "Receipt uploaded successfully" })
+      const updatedStage = await Stage.findByPk(id);
+      if (!updatedStage) {
+        throw new AppError(404, "Failed to retrieve updated stage");
+      }
+
+      logger.info(`Payment receipt uploaded for stage: ${id}`);
+      const response: ApiResponse<Stage> = {
+        success: true,
+        message: "Payment receipt uploaded successfully",
+        data: updatedStage
+      };
+      return res.status(200).json(response);
     } catch (error) {
-      console.error("Receipt upload error:", error)
-      return res.stage(500).json({ message: "Failed to upload receipt" })
+      handleError(error, "upload receipt", res);
     }
-  },
-
-  async approvePayment(req: Request, res: Response, next: NextFunction): Promise<any> {
-    const { StageId } = req.params
-    const { paymentDate, amountPaid } = req.body
-
-    try {
-      // Validate input
-      if (!paymentDate) {
-        return res.stage(400).json({ message: "Payment date is required" })
-      }
-
-      if (!amountPaid || isNaN(Number(amountPaid)) || Number(amountPaid) <= 0) {
-        return res.stage(400).json({ message: "Valid payment amount is required" })
-      }
-
-      const stage = await Stage.findByPk(StageId)
-      if (!stage) {
-        return res.stage(404).json({ message: "Shipping stage not found" })
-      }
-
-      // Validate that this stage has a pending payment
-      if (stage.paymentStatus !== "PENDING") {
-        return res.stage(400).json({ message: "This shipping stage does not have a pending payment" })
-      }
-
-      // Validate that receipt exists
-      if (!stage.paymentReceipt) {
-        return res.stage(400).json({ message: "No payment receipt found for this shipping stage" })
-      }
-
-      await stage.update({
-        paymentDate: new Date(paymentDate),
-        amountPaid: Number.parseFloat(amountPaid),
-        paymentStatus: "PAID",
-      })
-
-      const updatedStatus = await Stage.findByPk(StageId)
-      res.stage(200).json({ message: "Payment approved successfully", stage: updatedStatus })
-    } catch (err) {
-      console.error("Error approving payment:", err)
-      return res.stage(500).json({ message: "Error approving payment" })
-    }
-  },
-}
-
-export default StageController
+  }
+};

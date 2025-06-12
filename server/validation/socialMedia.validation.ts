@@ -1,6 +1,7 @@
 import { SocialMediaCreationDto } from "../dto/creationDtos";
 import { SocialMedia } from "../models/SocialMedia";
 import { ValidationError, ValidationErrorItem } from "../utils/error/errorClasses";
+import { AppError } from '../utils/error/errorClasses';
 
 // Fixed validation functions
 const validateUpdateSocialMediaData = (data: Partial<SocialMedia>): void => {
@@ -98,8 +99,45 @@ const validateCreateSocialMediaData = (data: SocialMediaCreationDto): void => {
   }
 }
 
+interface SocialMediaData {
+  name: string;
+  url: string;
+}
 
+export const validateSocialMediaCreation = (data: SocialMediaData): void => {
+  if (!data.name || typeof data.name !== 'string') {
+    throw new AppError(400, 'Name is required and must be a string');
+  }
 
+  if (!data.url || typeof data.url !== 'string') {
+    throw new AppError(400, 'URL is required and must be a string');
+  }
+
+  // Basic URL validation
+  try {
+    new URL(data.url);
+  } catch (error) {
+    throw new AppError(400, 'Invalid URL format');
+  }
+};
+
+export const validateSocialMediaUpdate = (data: Partial<SocialMediaData>): void => {
+  if (data.name !== undefined && typeof data.name !== 'string') {
+    throw new AppError(400, 'Name must be a string');
+  }
+
+  if (data.url !== undefined) {
+    if (typeof data.url !== 'string') {
+      throw new AppError(400, 'URL must be a string');
+    }
+    // Basic URL validation
+    try {
+      new URL(data.url);
+    } catch (error) {
+      throw new AppError(400, 'Invalid URL format');
+    }
+  }
+};
 
 export { 
   validateUpdateSocialMediaData, 

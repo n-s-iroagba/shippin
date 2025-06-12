@@ -6,7 +6,12 @@ export interface DocumentTemplateAttributes {
   id?: number;
   adminId: number;
   name: string;
-  file: Buffer
+  file: Buffer;
+  fileType: string;
+  fileName: string;
+  fileSize: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 class DocumentTemplate extends Model<DocumentTemplateAttributes> implements DocumentTemplateAttributes {
@@ -14,6 +19,11 @@ class DocumentTemplate extends Model<DocumentTemplateAttributes> implements Docu
   public adminId!: number;
   public name!: string;
   public file!: Buffer;
+  public fileType!: string;
+  public fileName!: string;
+  public fileSize!: number;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 }
 
 DocumentTemplate.init(
@@ -39,6 +49,18 @@ DocumentTemplate.init(
       type: DataTypes.BLOB('long'),
       allowNull: false,
     },
+    fileType: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    fileName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    fileSize: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    }
   },
   {
     sequelize,

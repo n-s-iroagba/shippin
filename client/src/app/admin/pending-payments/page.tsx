@@ -6,10 +6,11 @@ import { Spinner } from "@/components/Spinner";
 import ErrorAlert from "@/components/ErrorAlert";
 import { TruckIcon } from "@heroicons/react/24/outline";
 import { useGetList } from "@/hooks/useGet";
-import { Stage } from "@/types/shipment.types";
+
 import PendingPaymentCard from "@/components/PendingPaymentCard";
 import { routes } from "@/data/routes";
 import { useAuth } from "@/hooks/useAuth";
+import { Stage } from "@/types/stage.types";
 
 export default function StageCrudPage() {
   const {id} = useAuth()
@@ -26,6 +27,7 @@ export default function StageCrudPage() {
   const [documentType, setDocumentType] = useState<
     "supportingDocument" | "paymentReceipt"
   >("supportingDocument");
+  const [selectedReceiptIndex, setSelectedReceiptIndex] = useState<number>(0);
 
   if (loading) {
     return <Spinner className="w-10 h-10 text-blue-600" />;
@@ -37,14 +39,32 @@ export default function StageCrudPage() {
 
   const handleViewDocument = (
     stage: Stage,
-    type: "supportingDocument" | "paymentReceipt"
+    type: "supportingDocument" | "paymentReceipt",
+    receiptIndex?: number
   ) => {
     setStageForDocument(stage);
     setDocumentType(type);
+    if (type === "paymentReceipt" && receiptIndex !== undefined) {
+      setSelectedReceiptIndex(receiptIndex);
+    }
   };
 
   const handleApprovePayment = (stage: Stage) => {
     setStageForPayment(stage);
+  };
+
+  // Get the document to display based on type
+  const getDocumentToDisplay = () => {
+    if (!stageForDocument) return null;
+    
+    if (documentType === "paymentReceipt") {
+      // Return the selected payment receipt from the array
+      return stageForDocument.paymentReceipts?.[selectedReceiptIndex] || null;
+    }
+    
+    // For supporting documents, we'd need to add this field to the Stage type
+    // For now, return null since it doesn't exist
+    return null;
   };
 
   return (
@@ -88,12 +108,11 @@ export default function StageCrudPage() {
           {stageForDocument && (
             <DocumentModal
               onClose={() => setStageForDocument(null)}
-              document={stageForDocument[documentType]}
-              title={`${
-                documentType === "supportingDocument"
-                  ? "Supporting Document"
-                  : "Payment Receipt"
-              } - ${stageForDocument.title}`}
+              document={getDocumentToDisplay()}
+              title={
+             
+             `Payment Receipt ${selectedReceiptIndex + 1}`
+             }
               stageName={stageForDocument.title}
             />
           )}

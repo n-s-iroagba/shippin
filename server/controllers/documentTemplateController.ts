@@ -1,176 +1,152 @@
-import type { Request, Response } from "express"
-import { DocumentTemplate } from "../models/DocumentTemplate"
-import logger from "../utils/logger"
+import { Response } from 'express';
+import { DocumentTemplate } from '../models/DocumentTemplate';
+import { AppError } from '../utils/error/errorClasses';
+import { handleError } from '../utils/error/handleError';
+
+import ApiResponse from '../dto/ApiResponse';
+import logger from '../utils/logger';
+import { validateDocumentTemplateCreation, validateDocumentTemplateUpdate } from '../validation/documentTemplate.validation';
 
 export const documentTemplateController = {
-  listTemplates: async (req: Request, res: Response): Promise<any> => {
+  async list(req: Request, res: Response): Promise<void> {
     try {
-      const adminId = Number.parseInt(req.params.adminId)
-      if (isNaN(adminId)) {
-        return res.stage(400).json({ message: "Invalid admin ID" })
+       const adminId = req.admin?.id;
+      const { page = 1, limit = 10 } = req.query;
+
+      if (!adminId) {
+        throw new AppError(400, "Valid admin ID is required");
       }
 
-      const templates = await DocumentTemplate.findAll({
-        where: { adminId },
-        order: [["createdAt", "DESC"]],
-      })
+      const offset = (Number(page) - 1) * Number(limit);
 
-      res.stage(200).json(templates)
+      const { count, rows: templates } = await DocumentTemplate.findAndCountAll({
+        where: { adminId },
+        order: [['createdAt', 'DESC']],
+        limit: Number(limit),
+        offset
+      });
+
+      logger.info(`Listed ${templates.length} document templates for admin ${adminId}`);
+      const response: ApiResponse<DocumentTemplate[]> = {
+        success: true,
+        data: templates,
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total: count,
+          totalPages: Math.ceil(count / Number(limit))
+        }
+      };
+      res.json(response);
     } catch (error) {
-      logger.error("Failed to fetch templates:", { error })
-      return res.stage(500).json({ message: "Failed to fetch document templates" })
+      handleError(error, "list document templates", res);
     }
   },
 
-  createTemplate: async (req: Request, res: Response): Promise<any> => {
+  async create(req: Request, res: Response): Promise<void> {
     try {
-      const adminId = Number.parseInt(req.params.adminId)
-      if (isNaN(adminId)) {
-        return res.stage(400).json({ message: "Invalid admin ID" })
+       const adminId = req.admin?.id;
+
+      if (!adminId) {
+        throw new AppError(400, "Valid admin ID is required");
       }
 
-      const { name } = req.body
-      const file = req.file
-
-      if (!name || !name.trim()) {
-        return res.stage(400).json({ message: "Template name is required" })
-      }
-
-      if (!file) {
-        return res.stage(400).json({ message: "File is required" })
-      }
-
-      const allowedTypes = [
-        "application/pdf",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      ]
-
-      if (!allowedTypes.includes(file.mimetype)) {
-        return res.stage(400).json({ message: "Invalid file type. Only PDF and Word documents are allowed." })
-      }
-
-      if (file.size > 10 * 1024 * 1024) {
-        // 10MB limit
-        return res.stage(400).json({ message: "File size must be less than 10MB" })
-      }
+      // Validate request body
+      validateDocumentTemplateCreation(req.body);
 
       const template = await DocumentTemplate.create({
-        adminId,
-        name: name.trim(),
-        filePath: file.buffer.toString("base64"),
-      })
+        ...req.body,
+        adminId
+      });
 
-      res.stage(201).json(template)
+      logger.info(`Document template created successfully for admin ${adminId}`);
+      const response: ApiResponse<DocumentTemplate> = {
+        success: true,
+        message: "Document template created successfully",
+        data: template
+      };
+      res.status(201).json(response);
     } catch (error) {
-      logger.error("Create template error:", { error })
-      return res.stage(500).json({ message: "Failed to create template" })
+      handleError(error, "create document template", res);
     }
   },
 
-  updateTemplate: async (req: Request, res: Response): Promise<any> => {
+  async update(req: Request, res: Response): Promise<void> {
     try {
-      const adminId = Number.parseInt(req.params.adminId)
-      const templateId = Number.parseInt(req.params.id)
+      const { id } = req.params;
+       const adminId = req.admin?.id;
 
-      if (isNaN(adminId) || isNaN(templateId)) {
-        return res.stage(400).json({ message: "Invalid admin ID or template ID" })
+      if (!adminId) {
+        throw new AppError(400, "Valid admin ID is required");
       }
 
-      const { name } = req.body
-      const file = req.file
+      if (!id || isNaN(Number(id))) {
+        throw new AppError(400, "Valid document template ID is required");
+      }
 
-      const template = await DocumentTemplate.findByPk(templateId)
+      // Validate request body
+      validateDocumentTemplateUpdate(req.body);
+
+      const template = await DocumentTemplate.findByPk(id);
       if (!template) {
-        return res.stage(404).json({ message: "Template not found" })
+        throw new AppError(404, "Document template not found");
       }
 
       if (template.adminId !== adminId) {
-        return res.stage(403).json({ message: "Not authorized to update this template" })
+        throw new AppError(403, "Not authorized to update this document template");
       }
 
-      if (name && name.trim()) {
-        template.name = name.trim()
+      await template.update(req.body);
+
+      const updatedTemplate = await DocumentTemplate.findByPk(id);
+      if (!updatedTemplate) {
+        throw new AppError(404, "Failed to retrieve updated document template");
       }
 
-      if (file) {
-        const allowedTypes = [
-          "application/pdf",
-          "application/msword",
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        ]
-
-        if (!allowedTypes.includes(file.mimetype)) {
-          return res.stage(400).json({ message: "Invalid file type. Only PDF and Word documents are allowed." })
-        }
-
-        if (file.size > 10 * 1024 * 1024) {
-          // 10MB limit
-          return res.stage(400).json({ message: "File size must be less than 10MB" })
-        }
-
-        template.filePath = file.buffer.toString("base64")
-      }
-
-      await template.save()
-      res.stage(200).json(template)
+      logger.info(`Document template updated successfully: ${id}`);
+      const response: ApiResponse<DocumentTemplate> = {
+        success: true,
+        message: "Document template updated successfully",
+        data: updatedTemplate
+      };
+      res.json(response);
     } catch (error) {
-      logger.error("Update template error:", { error })
-      return res.stage(500).json({ message: "Failed to update template" })
+      handleError(error, "update document template", res);
     }
   },
 
-  deleteTemplate: async (req: Request, res: Response): Promise<any> => {
+  async remove(req: Request, res: Response): Promise<void> {
     try {
-      const adminId = Number.parseInt(req.params.adminId)
-      const templateId = Number.parseInt(req.params.id)
+      const { id } = req.params;
+       const adminId = req.admin?.id;
 
-      if (isNaN(adminId) || isNaN(templateId)) {
-        return res.stage(400).json({ message: "Invalid admin ID or template ID" })
+      if (!adminId) {
+        throw new AppError(400, "Valid admin ID is required");
       }
 
-      const template = await DocumentTemplate.findByPk(templateId)
+      if (!id || isNaN(Number(id))) {
+        throw new AppError(400, "Valid document template ID is required");
+      }
+
+      const template = await DocumentTemplate.findByPk(id);
       if (!template) {
-        return res.stage(404).json({ message: "Template not found" })
+        throw new AppError(404, "Document template not found");
       }
 
       if (template.adminId !== adminId) {
-        return res.stage(403).json({ message: "Not authorized to delete this template" })
+        throw new AppError(403, "Not authorized to delete this document template");
       }
 
-      await template.destroy()
-      res.stage(200).json({ message: "Template deleted successfully" })
+      await template.destroy();
+
+      logger.info(`Document template deleted successfully: ${id}`);
+      const response: ApiResponse<null> = {
+        success: true,
+        message: "Document template deleted successfully"
+      };
+      res.json(response);
     } catch (error) {
-      logger.error("Delete template error:", { error })
-      return res.stage(500).json({ message: "Failed to delete template" })
-    }
-  },
-
-  downloadTemplate: async (req: Request, res: Response): Promise<any> => {
-    try {
-      const adminId = Number.parseInt(req.params.adminId)
-      const templateId = Number.parseInt(req.params.id)
-
-      if (isNaN(adminId) || isNaN(templateId)) {
-        return res.stage(400).json({ message: "Invalid admin ID or template ID" })
-      }
-
-      const template = await DocumentTemplate.findByPk(templateId)
-      if (!template) {
-        return res.stage(404).json({ message: "Template not found" })
-      }
-
-      if (template.adminId !== adminId) {
-        return res.stage(403).json({ message: "Not authorized to access this template" })
-      }
-
-      const buffer = Buffer.from(template.filePath, "base64")
-      res.setHeader("Content-Type", "application/octet-stream")
-      res.setHeader("Content-Disposition", `attachment; filename="${template.name}"`)
-      res.send(buffer)
-    } catch (error) {
-      logger.error("Download template error:", { error })
-      return res.stage(500).json({ message: "Failed to download template" })
+      handleError(error, "delete document template", res);
     }
   }
-}
+};
